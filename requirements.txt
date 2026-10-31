@@ -1,0 +1,25 @@
+# torch/torchaudio are installed separately from the CUDA index (see installers):
+#   pip install torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128
+
+# Separation
+audio-separator[gpu]==0.47.0
+onnxruntime-gpu<1.27      # 1.27+ targets CUDA 13; keep CUDA 12 to match torch cu128. Only onnxruntime package in the env.
+librosa<1.0               # librosa 1.0 dropped audioread, still imported by audio-separator 0.47
+
+# RVC inference (vendored Applio, third_party/applio)
+faiss-cpu
+torchcrepe
+torchfcpe
+transformers
+soxr
+stftpitchshift
+einops
+beautifulsoup4            # Applio model_download (HF tree pages)
+
+# Effects / mixing
+pedalboard
+
+# UI / app
+gradio==6.30.0
+yt_dlp
+pypresence

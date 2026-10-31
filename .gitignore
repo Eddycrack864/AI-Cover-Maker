@@ -1,0 +1,51 @@
+# Reference clones (local only, never committed)
+.reference/
+
+# Model weights
+*.onnx
+*.pth
+*.th
+*.ckpt
+*.chpt
+*.pt
+*.bin
+*.index
+
+# Audio files
+*.wav
+*.flac
+*.mp3
+*.ogg
+*.opus
+*.m4a
+*.aiff
+*.ac3
+
+# Runtime data
+models/
+workspace/
+outputs/
+ytdl/
+user_data/
+assets/config.json
+
+# Environments
+.env
+.venv
+env/
+env_old/
+venv/
+
+# Python / tooling
+__pycache__/
+*.py[cod]
+/.gradio
+.pytest_cache/
+.ruff_cache/
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Local dev assets and tooling (test samples, standalone uv/python)
+.local/
+.tools/
