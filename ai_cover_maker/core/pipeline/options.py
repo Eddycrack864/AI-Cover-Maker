@@ -32,8 +32,7 @@ class CoverOptions:
     lead_gain_db: float = 0.0
     backing_gain_db: float = 0.0
     instrumental_gain_db: float = 0.0
-    output_format: str = "wav"
-    keep_stems: bool = False  # also save the final stems next to the cover
+    output_format: str = "wav"  # of the cover and of every stem saved next to it
 
     def stage_model(self, stage: str) -> str | None:
         return getattr(self, f"{stage}_model")

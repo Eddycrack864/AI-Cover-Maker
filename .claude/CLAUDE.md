@@ -20,7 +20,7 @@ It installs locally with Windows/Linux scripts and runs on Google Colab.
   (en_US, es_ES, pt_BR).
 - History and decisions are in `.claude/plans/`:
   - `00-feasibility-and-architecture.md` is the approved plan.
-  - `01`–`06` are per-phase notes.
+  - `01`–`06` are per-phase notes, `07`+ later changes.
   - Add a new numbered file for each new piece of work.
 
 ## Reference repositories (`.reference/`, gitignored)
@@ -44,6 +44,8 @@ The package is `ai_cover_maker/`; `app.py` is a thin launcher.
   - Ported from UVR5-UI: `ArchSpec`s per architecture and `SeparatorCache`, which keeps the last
     model loaded. Its cache key includes `output_dir`.
   - Models come from `assets/models.json` and are downloaded to `models/separation/`.
+  - There is no separation UI. Parameters are always UVR5 UI's defaults from
+    `assets/default_settings.json` (`config/settings.py`); users can't change them.
 - `rvc/engine.py`:
   - `RvcEngine` wraps Applio's `VoiceConverter`. `_setup_applio()` sets the `APPLIO_*` env vars and
     `sys.path` before any `import rvc`; always go through `import_applio()`.
@@ -61,12 +63,16 @@ The package is `ai_cover_maker/`; `app.py` is a thin launcher.
     never cache by file name.
   - `roles.py` picks the kept stem by normalized label, because separation models name stems
     inconsistently.
+  - Every cover goes to `outputs/<song> (<voice> Cover)/`: the cover plus every stem made along the
+    way, all named `<song> (<label>).<output format>` (`KEPT_LABELS`/`REST_LABELS` in `runner.py`).
+    A re-run replaces that folder's `<song> (*` audio files.
+  - `run(on_log=...)` receives the short, translated step log (`STEP_TEXT`) every time it changes.
 - `device.gpu_lock` (an `RLock`) wraps every model load and inference. On GPUs with 8 GB or less
   (`low_vram()`), the separator and the RVC voice are never loaded at the same time.
 
 `integrations/discord_presence.py`: optional Rich Presence (UVR5-UI port). Handlers wrap their work in
 `presence.track(<activity>)`. `CLIENT_ID` is the Discord app's Application ID; empty disables it. The
-image asset keys (`logo`, `idling`, `cover`, `convert`, separation ones) must exist in that Discord app.
+app only has the `logo`, `idling` and `cover` image assets: a new activity needs its image uploaded there.
 
 `ui/` follows UVR5-UI conventions:
 - Handlers use `inputs_kwargs`. The parameter names become the public API names, so components they
@@ -75,8 +81,10 @@ image asset keys (`logo`, `idling`, `cover`, `convert`, separation ones) must ex
 - GPU events share `concurrency_id=GPU_CONCURRENCY_ID`.
 - Every tab starts with `a11y.tab_heading`.
 - Theme, css and js go to `launch()` (Gradio 6).
-- Tabs: Cover, Voice conversion, Separation (5 architecture sub-tabs), Voices, Themes, Settings,
-  Credits.
+- Tabs: Cover, Voices, Themes, Settings, Credits.
+- Long handlers that stream text run the core in a thread with `adapters.run_streaming()`; the
+  progress bar goes only on the main output (`show_progress_on`).
+- Buttons next to a dropdown or textbox go in `gr.Row(equal_height=True)` (a test checks this).
 
 ### Vendored Applio (`third_party/applio/`)
 - Never edit these files by hand. `tools/sync_applio.py` copies `INCLUDE` from `.reference/Applio`,

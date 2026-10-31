@@ -56,7 +56,7 @@ def test_tracks_activity_then_idles(monkeypatch):
     assert rpc.closed and manager.rpc is None
 
 
-def test_every_separation_tab_has_an_activity():
-    from ai_cover_maker.core.separation.specs import ARCHITECTURES
 
-    assert {spec.id for spec in ARCHITECTURES} <= set(discord_presence.ACTIVITIES)
+def test_only_uploaded_images_are_used():
+    assert {image for image, _ in discord_presence.ACTIVITIES.values()} <= {"cover"}
+    assert discord_presence.CLIENT_ID.isdigit()

@@ -2,15 +2,11 @@
 
 import gradio as gr
 
-from ai_cover_maker.core.separation.specs import ARCHITECTURES
 from ai_cover_maker.i18n import i18n
 from ai_cover_maker.ui import a11y, theme
 from ai_cover_maker.ui.context import AppContext
-from ai_cover_maker.ui.rvc_controls import refresh_voices
-from ai_cover_maker.ui.tabs.convert import render_convert_tab
 from ai_cover_maker.ui.tabs.cover import refresh_cover_voices, render_cover_tab
 from ai_cover_maker.ui.tabs.credits import render_credits_tab
-from ai_cover_maker.ui.tabs.separation import render_separation_tab
 from ai_cover_maker.ui.tabs.settings import render_settings_tab
 from ai_cover_maker.ui.tabs.themes import render_themes_tab
 from ai_cover_maker.ui.tabs.voices import render_voices_tab
@@ -43,19 +39,10 @@ def create_app(ctx: AppContext = None) -> gr.Blocks:
 
         with gr.Tabs():
             cover = render_cover_tab(ctx)
-            convert_voice = render_convert_tab()
-            with gr.TabItem(i18n("Separation")):
-                a11y.tab_heading(i18n("Separation"))
-                with gr.Tabs():
-                    separation_tabs = [render_separation_tab(spec, ctx) for spec in ARCHITECTURES]
-
-            def refresh_all(voice, backing_voice, converter_voice):
-                return (*refresh_cover_voices(voice, backing_voice), refresh_voices(converter_voice))
-
-            selectors = [cover.voice, cover.backing_voice, convert_voice]
-            render_voices_tab((refresh_all, selectors, selectors))
+            selectors = [cover.voice, cover.backing_voice]
+            render_voices_tab((refresh_cover_voices, selectors, selectors))
             render_themes_tab(ctx)
-            render_settings_tab(ctx, separation_tabs)
+            render_settings_tab(ctx)
             render_credits_tab()
 
     return app

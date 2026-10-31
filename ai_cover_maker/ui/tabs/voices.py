@@ -36,7 +36,7 @@ def render_voices_tab(on_change) -> None:
             upload = gr.Button(i18n("Add voice model"), variant="primary")
 
         with gr.Accordion(i18n("Delete a voice model"), open=False):
-            with gr.Row():
+            with gr.Row(equal_height=True):
                 to_delete = gr.Dropdown(choices=voice_names(), label=i18n("Voice model to delete"), interactive=True)
                 delete = gr.Button(i18n("Delete voice model"), variant="stop", scale=0)
         status = gr.Markdown()

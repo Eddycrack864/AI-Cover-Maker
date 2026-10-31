@@ -8,18 +8,13 @@ import threading
 logger = logging.getLogger(__name__)
 
 # Application ID of the "AI Cover Maker" app in the Discord Developer Portal. Empty disables the presence.
-CLIENT_ID = ""
+CLIENT_ID = "1566198256130719857"
 IDLE = "Idling"
 
-# activity id -> (small_image asset, label shown in Discord). Separation ids are the ArchSpec ids.
+# activity id -> (small_image asset, label shown in Discord). The app has the "logo", "idling" and
+# "cover" image assets; a new activity needs its image uploaded there first.
 ACTIVITIES = {
     "cover": ("cover", "AI Cover"),
-    "convert": ("convert", "Voice Conversion"),
-    "roformer": ("roformer", "BS/Mel Roformer Separation"),
-    "mdx23c": ("mdxc", "MDXC Separation"),
-    "mdxnet": ("mdxnet", "MDX-NET Separation"),
-    "vrarch": ("vrarch", "VR Arch Separation"),
-    "demucs": ("demucs", "Demucs Separation"),
 }
 
 

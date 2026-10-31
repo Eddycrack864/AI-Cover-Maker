@@ -1,8 +1,11 @@
 """Glue between Gradio event handlers and the core services."""
 
+import contextvars
 import functools
 import inspect
 import logging
+import queue
+import threading
 
 import gradio as gr
 
@@ -52,6 +55,34 @@ def user_errors(func):
         except Exception as e:
             raise to_gr_error(e) from e
     return wrapper
+
+
+def run_streaming(func, render=lambda message: message, poll: float = 0.2):
+    """Run ``func(emit)`` in a worker thread and yield ``render(value)`` for every value it emits.
+
+    Use it with ``result = yield from run_streaming(...)``: the return value is ``func``'s, and
+    its exception is raised here. Gradio's context is copied to the thread, so ``gr.Progress``
+    keeps working inside ``func``.
+    """
+    messages = queue.Queue()
+    outcome = {}
+
+    def target():
+        try:
+            outcome["value"] = func(messages.put)
+        except BaseException as e:
+            outcome["error"] = e
+
+    thread = threading.Thread(target=contextvars.copy_context().run, args=(target,), daemon=True)
+    thread.start()
+    while thread.is_alive() or not messages.empty():
+        try:
+            yield render(messages.get(timeout=poll))
+        except queue.Empty:
+            pass
+    if "error" in outcome:
+        raise outcome["error"]
+    return outcome["value"]
 
 
 def validations(*checks) -> dict:

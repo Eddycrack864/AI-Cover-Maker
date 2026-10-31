@@ -107,16 +107,29 @@ def voice(tmp_path):
 
 def test_full_cover_and_cache(pipeline, song, voice):
     options = CoverOptions(voice=voice, vocals_model=VOCALS, karaoke_model=KARAOKE, dereverb_model=DEREVERB)
-    result = pipeline.run(song, options)
+    logs = []
+    result = pipeline.run(song, options, on_log=logs.append)
 
+    # The cover and every stem, named after the song, in one folder
+    assert result.folder.name == "My Song (Singer Cover)" and result.cover.parent == result.folder
     assert result.cover.name == "My Song (Singer Cover).wav"
+    assert sorted(f.name for f in result.folder.iterdir()) == sorted(f"My Song ({name}).wav" for name in (
+        "Singer Cover", "Vocals", "Instrumental", "Lead Vocals", "Backing Vocals", "Lead Vocals, No Reverb", "Reverb",
+        "Lead Vocals, Singer"))
+    assert {role: path.name for role, path in result.stems.items()} == {
+        "instrumental": "My Song (Instrumental).wav", "lead": "My Song (Lead Vocals, Singer).wav",
+        "backing": "My Song (Backing Vocals).wav"}
+    # The readable log grows step by step
+    assert logs[0] == ["Separating the vocals from the instrumental..."]
+    assert logs[-1] == result.log and len(result.log) == 6
+    assert result.log[1].startswith("Splitting the lead and backing vocals... done in ")
+    assert result.log[-1].startswith("Cover finished in ")
     data, sr = sf.read(result.cover)
     assert sr == SR and data.ndim == 2 and np.abs(data).max() <= 10 ** (-1 / 20) + 1e-3
     assert [run[0] for run in WavSeparator.runs] == [
         "vocals_mel_band_roformer.ckpt", "mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
         "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt"]
     assert pipeline.engine.calls == [("Singer", 0, pipeline.engine.calls[0][2])]
-    assert set(result.stems) == {"instrumental", "backing"}
     assert result.cached_steps == []
 
     # Only the mix changed: nothing is separated or converted again
@@ -125,6 +138,9 @@ def test_full_cover_and_cache(pipeline, song, voice):
     assert WavSeparator.runs == [] and len(pipeline.engine.calls) == 1
     assert again.cached_steps == ["vocals", "karaoke", "dereverb", "rvc_lead"]
     assert again.cover.suffix == ".flac"
+    assert "Separating the vocals from the instrumental... reused from a previous run" in again.log
+    # The stems follow the output format, and the files of the previous run are replaced
+    assert {f.suffix for f in again.folder.iterdir()} == {".flac"} and len(list(again.folder.iterdir())) == 8
 
 
 def test_changing_a_step_recomputes_only_what_depends_on_it(pipeline, song, voice):
@@ -146,10 +162,12 @@ def test_key_shift_moves_rvc_pitch_and_instrumental(pipeline, song, voice):
                            rvc=RvcParams(pitch=12))
     result = pipeline.run(song, options)
     assert pipeline.engine.calls[0][1] == 10  # voice pitch + key shift
-    assert any("shift_instrumental" in line or "key changed" in line for line in result.log)
+    assert any(line.startswith("Changing the key of the instrumental") for line in result.log)
     inst, _ = sf.read(result.stems["instrumental"])
     assert len(inst) == SR // 2  # same duration after the key change
-    assert "shift_backing" in str(result.stems["backing"].parent.name)
+    assert result.stems["instrumental"].name == "My Song (Instrumental, Key -2).wav"
+    assert result.stems["backing"].name == "My Song (Backing Vocals, Key -2).wav"
+    assert (result.folder / "My Song (Instrumental).wav").is_file()  # the original key is kept too
 
 
 def test_backing_vocals_conversion(pipeline, song, voice):
@@ -157,16 +175,24 @@ def test_backing_vocals_conversion(pipeline, song, voice):
                            backing_rvc=RvcParams(pitch=-3))
     result = pipeline.run(song, options)
     assert [c[1] for c in pipeline.engine.calls] == [0, -3]
-    assert result.stems["backing"].parent.name.startswith("rvc_backing-")
+    assert result.stems["backing"].name == "My Song (Backing Vocals, Singer).wav"
     with pytest.raises(AppError, match="lead/backing"):
         pipeline.run(song, replace(options, karaoke_model=None))
 
 
 def test_multi_stem_model_sums_the_instrumental(pipeline, song, voice):
-    result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=SIX_STEMS, keep_stems=True))
+    result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=SIX_STEMS))
     inst, _ = sf.read(result.stems["instrumental"])
     assert inst.shape == (SR // 2, 2) and np.abs(inst).max() > 0.2  # five sines summed
-    assert result.stems["lead"].parent.name.endswith("(stems)")
+    assert result.stems["lead"].name == "My Song (Vocals, Singer).wav"
+
+
+def test_effects_add_a_processed_stem(pipeline, song, voice):
+    from ai_cover_maker.core.effects.chain import VocalEffects
+
+    result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=VOCALS, effects=VocalEffects(highpass=True)))
+    assert result.stems["lead"].name == "My Song (Vocals, Singer, Effects).wav"
+    assert (result.folder / "My Song (Vocals, Singer).wav").is_file()  # the dry conversion is kept too
 
 
 def test_errors(pipeline, song, voice, tmp_path):
@@ -183,6 +209,7 @@ def test_batch_reports_each_file(pipeline, song, voice, tmp_path):
     lines = list(pipeline.run_batch(tmp_path, CoverOptions(voice=voice, vocals_model=VOCALS)))
     assert lines[0] == "2 audio files found"
     assert lines[-1].startswith("Finished: 1 covers, 1 failed")
+    assert "Done: My Song (Singer Cover)" in lines
 
 
 def test_split_stems():

@@ -6,7 +6,7 @@
   after choosing an option.
 - ``CSS``: a visible keyboard focus with every theme.
 - ``announcer()`` + ``announce()``: short messages for events that change the page silently
-  (a finished separation, a refreshed model list), read through the same live region.
+  (a finished cover, a refreshed model list), read through the same live region.
 """
 
 import html
@@ -16,7 +16,6 @@ from pathlib import Path
 
 import gradio as gr
 
-from ai_cover_maker.core.audio import parse_stem_label
 from ai_cover_maker.i18n import i18n
 
 _HERE = Path(__file__).parent
@@ -81,15 +80,3 @@ _announcement_ids = itertools.count(1)
 def announce(text: str) -> dict:
     # The id makes every message a new value, so a repeated one is announced again
     return {"text": text, "id": next(_announcement_ids)}
-
-
-def announce_stems(*stem_paths):
-    """Chained after a separation: which stems came out, e.g. "Separation finished: Vocals, Instrumental"."""
-    labels = [parse_stem_label(path) or Path(path).stem for path in stem_paths if path]
-    return announce(i18n("Separation finished: {stems}").format(stems=", ".join(labels)))
-
-
-def announce_batch(log: str | None):
-    """Chained after a batch: its summary line, e.g. "Done: 3 separated, 0 failed. Output: ..."."""
-    summary = (log or "").strip().splitlines()[-1:] or [""]
-    return announce(f"{i18n('Batch separation finished')}. {summary[0]}".strip())

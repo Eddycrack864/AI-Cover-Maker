@@ -2,7 +2,6 @@ import logging
 
 import gradio as gr
 
-from ai_cover_maker.core.audio import DEFAULT_NAME_TEMPLATE, check_name_template
 from ai_cover_maker.core.device import get_device
 from ai_cover_maker.core.downloads.model_downloader import METHOD_PYTHON, METHODS, SOURCES, download_model
 from ai_cover_maker.core.pipeline.cache import clear_workspace, workspace_size
@@ -12,12 +11,11 @@ from ai_cover_maker.ui import a11y
 from ai_cover_maker.ui.adapters import progress_callback, require, user_errors
 from ai_cover_maker.ui.components import model_choices, output_log
 from ai_cover_maker.ui.context import AppContext
-from ai_cover_maker.ui.tabs.separation import DEFAULT_OUTPUT_FORMAT, SeparationTab
 
 logger = logging.getLogger(__name__)
 
 
-def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -> None:
+def render_settings_tab(ctx: AppContext) -> None:
     with gr.TabItem(i18n("Settings")):
         a11y.tab_heading(i18n("Settings"))
         with gr.Accordion(i18n("Language selector"), open=False):
@@ -90,19 +88,7 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
                 value=runtime.use_soundfile,
                 interactive=True,
             )
-            gr.Markdown(i18n("Changes apply to the next separation."))
-
-        with gr.Accordion(i18n("Output file names"), open=False):
-            name_template = gr.Textbox(
-                label=i18n("Name template"),
-                info=i18n("Placeholders: {input} = input file name, {stem} = stem (required), {model} = model. "
-                          "Press Enter to save."),
-                value=runtime.name_template,
-                placeholder=DEFAULT_NAME_TEMPLATE,
-                lines=1,
-                max_lines=1,
-                interactive=True,
-            )
+            gr.Markdown(i18n("Changes apply to the next cover."))
 
         with gr.Accordion(i18n("Cover cache"), open=False):
             gr.Markdown(i18n("Every step of a cover is saved in the workspace folder, so trying other mix or voice "
@@ -110,12 +96,6 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
             with gr.Row():
                 cache_size = gr.Markdown(_cache_size_text())
                 clear_cache = gr.Button(i18n("Clear the cache"), variant="stop", scale=0)
-
-        with gr.Accordion(i18n("Separation settings management"), open=False):
-            gr.Markdown(i18n("Save your current separation parameter settings or reset them to the application defaults"))
-            with gr.Row():
-                save_button = gr.Button(i18n("Save current settings"), variant="primary")
-                reset_button = gr.Button(i18n("Reset settings to default"), variant="primary")
 
         with gr.Accordion(i18n("Discord Rich Presence"), open=False):
             discord_presence = gr.Checkbox(
@@ -150,47 +130,6 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
     download_button.click(run_download, inputs=[download_method, download_source, model_to_download],
                           outputs=[download_output], api_name="download_model")
 
-    # Save / reset separation settings across all tabs
-    index = [(tab.section, key, comp) for tab in separation_tabs for key, comp in tab.settings.items()]
-    all_inputs = [comp for _, _, comp in index]
-
-    def save_settings(*values):
-        data = {}
-        for (section, key, _), value in zip(index, values):
-            data.setdefault(section, {})[key] = value
-        try:
-            ctx.settings.save_custom(data)
-        except OSError as e:
-            logger.exception("Error saving settings")
-            raise gr.Error(f"{i18n('Error saving settings')}: {e}")
-        gr.Info(i18n("Current settings saved successfully! They will be loaded next time"))
-
-    def reset_settings():
-        try:
-            defaults = ctx.settings.reset()
-        except (OSError, ValueError) as e:
-            logger.exception("Error resetting settings")
-            gr.Warning(i18n("Error resetting settings"))
-            return [gr.update() for _ in index]
-
-        updates = []
-        for section, key, comp in index:
-            value = defaults.get(section, {}).get(key)
-            if key == "output_format" and value is None:
-                value = DEFAULT_OUTPUT_FORMAT
-            if isinstance(comp, gr.Dropdown) and value is not None:
-                choices = _choice_values(comp)
-                if isinstance(value, list):  # multiselect
-                    value = [v for v in value if v in choices]
-                elif value not in choices:
-                    value = None
-            updates.append(gr.update(value=value))
-        gr.Info(i18n("Settings reset to default. Default settings will be loaded next time"))
-        return updates
-
-    save_button.click(save_settings, inputs=all_inputs, api_visibility="undocumented")
-    reset_button.click(reset_settings, outputs=all_inputs, api_visibility="undocumented")
-
     # Performance
     for component, key, convert in (
         (precision, "performance.precision", str),
@@ -200,19 +139,6 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
     ):
         component.change(lambda value, key=key, convert=convert: ctx.config.set(key, convert(value)),
                          inputs=[component], api_visibility="undocumented")
-
-    def save_name_template(template):
-        template = (template or "").strip() or DEFAULT_NAME_TEMPLATE
-        try:
-            check_name_template(template)
-        except ValueError as e:
-            raise gr.Error(f"{i18n('Invalid name template')}: {e}")
-        ctx.config.set("output.name_template", template)
-        gr.Info(i18n("Name template saved"))
-        return template
-
-    name_template.submit(save_name_template, inputs=[name_template], outputs=[name_template],
-                         api_visibility="undocumented")
 
     def run_clear_cache():
         removed = clear_workspace()
@@ -238,7 +164,3 @@ def _current_language(ctx: AppContext) -> str:
         return AUTO_LANGUAGE
     return language
 
-
-def _choice_values(dropdown: gr.Dropdown) -> list:
-    # Gradio stores choices as (label, value) tuples
-    return [c[1] if isinstance(c, tuple) else c for c in dropdown.choices]

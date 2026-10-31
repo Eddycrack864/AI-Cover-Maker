@@ -13,7 +13,8 @@ from ai_cover_maker.core.separation.service import clean_path, is_folder
 from ai_cover_maker.i18n import N_, i18n
 from ai_cover_maker.integrations.discord_presence import presence
 from ai_cover_maker.ui import a11y, components
-from ai_cover_maker.ui.adapters import GPU_CONCURRENCY_ID, filled, progress_callback, require, user_errors, validations
+from ai_cover_maker.ui.adapters import (GPU_CONCURRENCY_ID, filled, progress_callback, require, run_streaming,
+                                        user_errors, validations)
 from ai_cover_maker.ui.context import AppContext
 from ai_cover_maker.ui.rvc_controls import refresh_voices, rvc_params, rvc_settings, voice_dropdown, voice_names
 
@@ -48,13 +49,16 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
 
     with gr.TabItem(i18n("Cover")):
         a11y.tab_heading(i18n("Cover"))
-        with gr.Row():
+        # equal_height: buttons as tall as the dropdowns and textboxes next to them
+        with gr.Row(equal_height=True):
             voice = voice_dropdown()
             refresh = gr.Button(i18n("Refresh voice models"), variant="secondary", scale=0)
+            output_format = gr.Dropdown(OUTPUT_FORMATS, value="wav", label=i18n("Select the output format"),
+                                        info=i18n("Of the cover and of every stem saved with it"))
         with gr.Row():
             audio = gr.Audio(label=i18n("Song"), type="filepath", interactive=True)
         with gr.Accordion(i18n("Download a song by link"), open=False):
-            with gr.Row():
+            with gr.Row(equal_height=True):
                 link = components.single_line_textbox(i18n("Link"), i18n("Paste the link here"))
                 download = gr.Button(i18n("Download!"), variant="primary", scale=0)
             gr.Markdown(i18n("You can paste the link to the video/audio from many sites, check the complete list [here](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)"))
@@ -91,10 +95,6 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
                 lead_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Lead vocals volume (dB)"))
                 backing_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Backing vocals volume (dB)"))
                 instrumental_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Instrumental volume (dB)"))
-            with gr.Row():
-                output_format = gr.Dropdown(OUTPUT_FORMATS, value="wav", label=i18n("Select the output format"))
-                keep_stems = gr.Checkbox(value=False, label=i18n("Save the stems"),
-                                         info=i18n("Also save the converted vocals and the instrumental next to the cover"))
 
         with gr.Accordion(i18n("Batch covers"), open=False):
             with gr.Row():
@@ -119,7 +119,7 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
     option_inputs = {
         "voice": voice, **stage_inputs, **rvc, **effects, "backing_voice": backing_voice, "backing_pitch": backing_pitch,
         "key_shift": key_shift, "lead_gain_db": lead_gain, "backing_gain_db": backing_gain,
-        "instrumental_gain_db": instrumental_gain, "output_format": output_format, "keep_stems": keep_stems,
+        "instrumental_gain_db": instrumental_gain, "output_format": output_format,
     }
 
     def build_options(values: dict) -> CoverOptions:
@@ -134,22 +134,30 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
             key_shift=int(values["key_shift"]),
             lead_gain_db=values["lead_gain_db"], backing_gain_db=values["backing_gain_db"],
             instrumental_gain_db=values["instrumental_gain_db"],
-            output_format=values["output_format"] or "wav", keep_stems=bool(values["keep_stems"]),
+            output_format=values["output_format"] or "wav",
         )
 
     def pipeline(output_dir=None) -> CoverPipeline:
-        return CoverPipeline(catalog=ctx.catalog, separation_settings=ctx.settings.initial(),
-                             runtime_options=RuntimeOptions.from_config(ctx.config), outputs_dir=output_dir)
+        # Separation parameters are always the bundled defaults
+        return CoverPipeline(catalog=ctx.catalog, runtime_options=RuntimeOptions.from_config(ctx.config),
+                             outputs_dir=output_dir)
 
     @user_errors
     def run(audio, progress=gr.Progress(), **values):
         song = require(audio, N_("Please provide an input audio"))
+        options = build_options(values)
+
+        def work(emit):
+            return pipeline().run(song, options, progress=progress_callback(progress), on_log=emit)
+
+        # The log shows each step as it happens; the progress bar is only on the cover
         with presence.track("cover"):
-            result = pipeline().run(song, build_options(values), progress=progress_callback(progress))
+            result = yield from run_streaming(work, render=lambda lines: (gr.skip(), gr.skip(), gr.skip(),
+                                                                          "\n".join(lines)))
         backing_path = result.stems.get("backing")
-        return (str(result.cover), str(result.stems["instrumental"]),
-                gr.update(value=str(backing_path) if backing_path else None, visible=backing_path is not None),
-                "\n".join(result.log))
+        yield (str(result.cover), str(result.stems["instrumental"]),
+               gr.update(value=str(backing_path) if backing_path else None, visible=backing_path is not None),
+               "\n".join(result.log))
 
     # Handler parameters are the API's names ("audio", "input_path"), so they shadow the components
     audio_input, input_path_box = audio, input_path
@@ -191,7 +199,7 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
 
     event = make.click(run, inputs_kwargs={"audio": audio, **option_inputs},
                        outputs=[cover, instrumental, backing, log], validator=validate, api_name="make_cover",
-                       concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
+                       show_progress_on=[cover], concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
     event.success(lambda: a11y.announce(i18n("Cover finished")), outputs=announcer, show_progress="hidden",
                   api_visibility="undocumented")
     batch_event = batch_button.click(run_batch, inputs_kwargs={"input_path": input_path, "output_path": output_path,

@@ -74,7 +74,7 @@ def test_i18n_override_and_fallback(tmp_root):
     store.set("lang.selected_lang", "es_ES")
     es = I18nAuto(config=store, lang_dir=lang_dir)
     assert es.language == "es_ES"
-    assert es("Select the model") != "Select the model"
+    assert es("Voice model") == "Modelo de voz"
     assert es("a key that does not exist") == "a key that does not exist"
 
     store.set("lang.selected_lang", "xx_XX")  # missing file -> no crash

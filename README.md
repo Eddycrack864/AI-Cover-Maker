@@ -16,9 +16,10 @@ The rewrite of [RVC AI Cover Maker UI](https://github.com/Eddycrack864/RVC-AI-Co
 * Convert the backing vocals with a second voice, or keep them.
 * Change the key of the whole song keeping its tempo.
 * Vocal effects: high-pass, compressor and reverb. A limiter keeps the cover from clipping.
-* **Voice conversion**: RVC on vocals you already have, single file or batch. Every Applio option: rmvpe/fcpe/crepe/swift, index ratio, protect, autotune, automatic pitch, formant shifting, custom embedders, noise cleanup.
+* Every Applio conversion option: rmvpe/fcpe/crepe/swift, index ratio, protect, autotune, automatic pitch, formant shifting, custom embedders, noise cleanup.
+* Each cover is saved in its own folder with every stem made along the way (vocals, instrumental, lead/backing vocals, reverb, converted vocals...), named after the song, for your own remixes.
 * **Voices**: add voice models by link (Hugging Face, Google Drive, direct `.zip`/`.pth`/`.index`) or upload, and delete them.
-* **Separation**: every UVR5 UI separation tab (Roformer, MDX23C, MDX-NET, VR Arch, Demucs) with the full model catalog.
+* The full UVR5 UI model catalog (Roformer, MDX23C, MDX-NET, VR Arch, Demucs) for every separation step, with UVR5 UI's default parameters.
 * Batch covers, downloads from [every site yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), themes, English/Spanish/Portuguese.
 * Windows/Linux and Google Colab.
 
@@ -47,7 +48,7 @@ Run options (also for `python app.py`):
 | `--server-name 0.0.0.0` | Make the UI reachable from other devices on your network |
 | `--open` | Open the UI in your browser (the run scripts already do this) |
 
-Voice models live in `models/rvc/<name>/` (`.pth` plus an optional `.index`). Covers are saved in `outputs/`, cached steps in `workspace/` (clear it from Settings).
+Voice models live in `models/rvc/<name>/` (`.pth` plus an optional `.index`). Covers are saved in `outputs/<song> (<voice> Cover)/`, cached steps in `workspace/` (clear it from Settings).
 
 ## Development
 
