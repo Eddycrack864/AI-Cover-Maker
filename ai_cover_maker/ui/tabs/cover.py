@@ -1,0 +1,231 @@
+"""The Cover tab: the whole pipeline in one click."""
+
+from dataclasses import dataclass, fields, replace
+
+import gradio as gr
+
+from ai_cover_maker.core.downloads.ytdl import download_audio
+from ai_cover_maker.core.effects.chain import VocalEffects
+from ai_cover_maker.core.pipeline.options import OUTPUT_FORMATS, SEPARATION_STAGES, CoverOptions, load_presets, preset_options
+from ai_cover_maker.core.pipeline.runner import CoverPipeline
+from ai_cover_maker.core.separation.runtime import RuntimeOptions
+from ai_cover_maker.core.separation.service import clean_path, is_folder
+from ai_cover_maker.i18n import N_, i18n
+from ai_cover_maker.ui import a11y, components
+from ai_cover_maker.ui.adapters import GPU_CONCURRENCY_ID, filled, progress_callback, require, user_errors, validations
+from ai_cover_maker.ui.context import AppContext
+from ai_cover_maker.ui.rvc_controls import refresh_voices, rvc_params, rvc_settings, voice_dropdown, voice_names
+
+STAGE_LABELS = {
+    "vocals": N_("Vocals / instrumental model"),
+    "karaoke": N_("Lead / backing vocals model"),
+    "dereverb": N_("De-reverb model"),
+    "deecho": N_("De-echo model"),
+    "denoise": N_("Denoise model"),
+}
+STAGE_INFO = {
+    "vocals": N_("Separates the vocals from the instrumental"),
+    "karaoke": N_("Optional. Converts only the lead vocals and keeps the backing vocals apart"),
+    "dereverb": N_("Optional. RVC sounds much cleaner on dry vocals"),
+    "deecho": N_("Optional. Removes echo/delay from the lead vocals"),
+    "denoise": N_("Optional. Removes noise from the lead vocals"),
+}
+EFFECT_FIELDS = {f.name for f in fields(VocalEffects)}
+DEFAULT_PRESET = "Balanced"
+
+
+@dataclass
+class CoverTab:
+    voice: gr.Dropdown
+    backing_voice: gr.Dropdown
+
+
+def render_cover_tab(ctx: AppContext) -> CoverTab:
+    presets = load_presets()
+    initial = preset_options(presets[DEFAULT_PRESET])
+    model_choices = components.model_choices(ctx.catalog, list(ctx.catalog))
+
+    with gr.TabItem(i18n("Cover")):
+        a11y.tab_heading(i18n("Cover"))
+        with gr.Row():
+            voice = voice_dropdown()
+            refresh = gr.Button(i18n("Refresh voice models"), variant="secondary", scale=0)
+        with gr.Row():
+            audio = gr.Audio(label=i18n("Song"), type="filepath", interactive=True)
+        with gr.Accordion(i18n("Download a song by link"), open=False):
+            with gr.Row():
+                link = components.single_line_textbox(i18n("Link"), i18n("Paste the link here"))
+                download = gr.Button(i18n("Download!"), variant="primary", scale=0)
+            gr.Markdown(i18n("You can paste the link to the video/audio from many sites, check the complete list [here](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)"))
+
+        with gr.Accordion(i18n("Separation steps"), open=False):
+            with gr.Row():
+                preset = gr.Dropdown(list(presets), value=DEFAULT_PRESET, label=i18n("Preset"),
+                                     info=i18n(presets[DEFAULT_PRESET].get("description", "")), interactive=True)
+            stages = {}
+            for stage in SEPARATION_STAGES:
+                optional = stage != "vocals"
+                choices = ([(i18n("Skip this step"), "")] if optional else []) + model_choices
+                stages[stage] = gr.Dropdown(choices, value=initial[f"{stage}_model"] or "", label=i18n(STAGE_LABELS[stage]),
+                                            info=i18n(STAGE_INFO[stage]), interactive=True)
+
+        with gr.Accordion(i18n("Voice conversion settings"), open=False):
+            rvc = rvc_settings()
+
+        with gr.Accordion(i18n("Backing vocals"), open=False):
+            gr.Markdown(i18n("Needs a lead / backing vocals model. Without a voice here the backing vocals keep the original singer"))
+            with gr.Row():
+                backing_voice = gr.Dropdown(choices=backing_choices(), value="", label=i18n("Backing vocals voice model"),
+                                            interactive=True)
+                backing_pitch = gr.Slider(-24, 24, value=0, step=1, label=i18n("Backing vocals pitch"))
+
+        with gr.Accordion(i18n("Vocal effects"), open=False):
+            effects = _effects_controls()
+
+        with gr.Accordion(i18n("Mix"), open=False):
+            with gr.Row():
+                key_shift = gr.Slider(-12, 12, value=0, step=1, label=i18n("Change the key of the song"),
+                                      info=i18n("Semitones for the whole song: instrumental and vocals, keeping the tempo"))
+            with gr.Row():
+                lead_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Lead vocals volume (dB)"))
+                backing_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Backing vocals volume (dB)"))
+                instrumental_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Instrumental volume (dB)"))
+            with gr.Row():
+                output_format = gr.Dropdown(OUTPUT_FORMATS, value="wav", label=i18n("Select the output format"))
+                keep_stems = gr.Checkbox(value=False, label=i18n("Save the stems"),
+                                         info=i18n("Also save the converted vocals and the instrumental next to the cover"))
+
+        with gr.Accordion(i18n("Batch covers"), open=False):
+            with gr.Row():
+                input_path = components.single_line_textbox(i18n("Input path"), i18n("Place the input path here"))
+                output_path = components.single_line_textbox(i18n("Output path"), i18n("Place the output path here"))
+            with gr.Row():
+                batch_button = gr.Button(i18n("Make all the covers!"), variant="primary")
+                stop_button = gr.Button(i18n("Stop"), variant="stop")
+            batch_info = components.output_log()
+
+        with gr.Row():
+            make = gr.Button(i18n("Make cover!"), variant="primary")
+        cover = gr.Audio(label=i18n("Cover"), type="filepath", interactive=False, buttons=["download"])
+        with gr.Row():
+            instrumental = gr.Audio(label=i18n("Instrumental"), type="filepath", interactive=False, buttons=["download"])
+            backing = gr.Audio(label=i18n("Backing vocals"), type="filepath", interactive=False, buttons=["download"],
+                               visible=False)
+        log = components.output_log()
+        announcer = a11y.announcer()
+
+    stage_inputs = {f"{stage}_model": stages[stage] for stage in SEPARATION_STAGES}
+    option_inputs = {
+        "voice": voice, **stage_inputs, **rvc, **effects, "backing_voice": backing_voice, "backing_pitch": backing_pitch,
+        "key_shift": key_shift, "lead_gain_db": lead_gain, "backing_gain_db": backing_gain,
+        "instrumental_gain_db": instrumental_gain, "output_format": output_format, "keep_stems": keep_stems,
+    }
+
+    def build_options(values: dict) -> CoverOptions:
+        params = rvc_params(values)
+        return CoverOptions(
+            voice=require(values["voice"], N_("Please select a voice model")),
+            **{f"{stage}_model": values[f"{stage}_model"] or None for stage in SEPARATION_STAGES},
+            rvc=params,
+            backing_voice=values["backing_voice"] or None,
+            backing_rvc=replace(params, pitch=int(values["backing_pitch"])),
+            effects=VocalEffects(**{k: v for k, v in values.items() if k in EFFECT_FIELDS}),
+            key_shift=int(values["key_shift"]),
+            lead_gain_db=values["lead_gain_db"], backing_gain_db=values["backing_gain_db"],
+            instrumental_gain_db=values["instrumental_gain_db"],
+            output_format=values["output_format"] or "wav", keep_stems=bool(values["keep_stems"]),
+        )
+
+    def pipeline(output_dir=None) -> CoverPipeline:
+        return CoverPipeline(catalog=ctx.catalog, separation_settings=ctx.settings.initial(),
+                             runtime_options=RuntimeOptions.from_config(ctx.config), outputs_dir=output_dir)
+
+    @user_errors
+    def run(audio, progress=gr.Progress(), **values):
+        song = require(audio, N_("Please provide an input audio"))
+        result = pipeline().run(song, build_options(values), progress=progress_callback(progress))
+        backing_path = result.stems.get("backing")
+        return (str(result.cover), str(result.stems["instrumental"]),
+                gr.update(value=str(backing_path) if backing_path else None, visible=backing_path is not None),
+                "\n".join(result.log))
+
+    # Handler parameters are the API's names ("audio", "input_path"), so they shadow the components
+    audio_input, input_path_box = audio, input_path
+
+    def validate(audio, **values):
+        return validations(
+            (voice, filled(values["voice"]), N_("Please select a voice model")),
+            (audio_input, filled(audio), N_("Please provide an input audio")),
+            (stages["vocals"], filled(values["vocals_model"]), N_("Please select a model first")),
+        )
+
+    @user_errors
+    def run_batch(input_path, output_path, progress=gr.Progress(), **values):
+        options = build_options(values)
+        lines = []
+        for line in pipeline(clean_path(output_path) or None).run_batch(clean_path(input_path), options,
+                                                                        progress=progress_callback(progress)):
+            lines.append(line)
+            yield "\n".join(lines)
+
+    def validate_batch(input_path, output_path, **values):
+        return validations(
+            (voice, filled(values["voice"]), N_("Please select a voice model")),
+            (input_path_box, is_folder(input_path), N_("The input path must be an existing folder")),
+        )
+
+    def apply_preset(name):
+        chosen = presets.get(name) or {}
+        kwargs = preset_options(chosen)
+        return [gr.update(info=i18n(chosen.get("description", "")))] + [
+            kwargs[f"{stage}_model"] or "" for stage in SEPARATION_STAGES]
+
+    preset.change(apply_preset, inputs=[preset], outputs=[preset, *stages.values()], api_visibility="undocumented")
+    refresh.click(refresh_cover_voices, inputs=[voice, backing_voice], outputs=[voice, backing_voice],
+                  api_visibility="undocumented")
+    download.click(user_errors(lambda url: str(download_audio(url))), inputs=[link], outputs=[audio],
+                   api_name="download_song")
+
+    event = make.click(run, inputs_kwargs={"audio": audio, **option_inputs},
+                       outputs=[cover, instrumental, backing, log], validator=validate, api_name="make_cover",
+                       concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
+    event.success(lambda: a11y.announce(i18n("Cover finished")), outputs=announcer, show_progress="hidden",
+                  api_visibility="undocumented")
+    batch_event = batch_button.click(run_batch, inputs_kwargs={"input_path": input_path, "output_path": output_path,
+                                                               **option_inputs},
+                                     outputs=[batch_info], validator=validate_batch, api_name="make_covers_batch",
+                                     concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
+    stop_button.click(None, cancels=[batch_event], api_visibility="undocumented")
+    return CoverTab(voice=voice, backing_voice=backing_voice)
+
+
+def backing_choices() -> list[tuple[str, str]]:
+    return [(i18n("Keep the original backing vocals"), "")] + [(name, name) for name in voice_names()]
+
+
+def refresh_cover_voices(voice, backing_voice):
+    """New voice lists for the lead and backing dropdowns, keeping the selections that still exist."""
+    choices = backing_choices()
+    backing = backing_voice if backing_voice in [value for _, value in choices] else ""
+    return refresh_voices(voice), gr.update(choices=choices, value=backing)
+
+
+def _effects_controls() -> dict:
+    d = VocalEffects()
+    c = {}
+    with gr.Row():
+        c["highpass"] = gr.Checkbox(value=d.highpass, label=i18n("High-pass filter"), info=i18n("Removes rumble below the cutoff"))
+        c["highpass_hz"] = gr.Slider(20, 300, value=d.highpass_hz, step=1, label=i18n("Cutoff frequency (Hz)"))
+    with gr.Row():
+        c["compressor"] = gr.Checkbox(value=d.compressor, label=i18n("Compressor"), info=i18n("Evens out the vocal volume"))
+        c["compressor_threshold_db"] = gr.Slider(-60, 0, value=d.compressor_threshold_db, step=1, label=i18n("Threshold (dB)"))
+        c["compressor_ratio"] = gr.Slider(1, 20, value=d.compressor_ratio, step=0.5, label=i18n("Ratio"))
+    with gr.Row():
+        c["reverb"] = gr.Checkbox(value=d.reverb, label=i18n("Reverb"), info=i18n("Puts the dry converted vocals back in a room"))
+        c["reverb_room_size"] = gr.Slider(0, 1, value=d.reverb_room_size, step=0.01, label=i18n("Room size"))
+        c["reverb_damping"] = gr.Slider(0, 1, value=d.reverb_damping, step=0.01, label=i18n("Damping"))
+    with gr.Row():
+        c["reverb_wet_level"] = gr.Slider(0, 1, value=d.reverb_wet_level, step=0.01, label=i18n("Wet level"))
+        c["reverb_dry_level"] = gr.Slider(0, 1, value=d.reverb_dry_level, step=0.01, label=i18n("Dry level"))
+        c["reverb_width"] = gr.Slider(0, 1, value=d.reverb_width, step=0.01, label=i18n("Width"))
+    return c

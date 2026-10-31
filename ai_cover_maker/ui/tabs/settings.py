@@ -5,6 +5,7 @@ import gradio as gr
 from ai_cover_maker.core.audio import DEFAULT_NAME_TEMPLATE, check_name_template
 from ai_cover_maker.core.device import get_device
 from ai_cover_maker.core.downloads.model_downloader import METHOD_PYTHON, METHODS, SOURCES, download_model
+from ai_cover_maker.core.pipeline.cache import clear_workspace, workspace_size
 from ai_cover_maker.core.separation.runtime import RuntimeOptions
 from ai_cover_maker.i18n import AUTO_LANGUAGE, LANGUAGE_NAMES, N_, i18n, normalize_language
 from ai_cover_maker.ui import a11y
@@ -103,6 +104,13 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
                 interactive=True,
             )
 
+        with gr.Accordion(i18n("Cover cache"), open=False):
+            gr.Markdown(i18n("Every step of a cover is saved in the workspace folder, so trying other mix or voice "
+                             "settings on the same song is fast. Clear it to free disk space."))
+            with gr.Row():
+                cache_size = gr.Markdown(_cache_size_text())
+                clear_cache = gr.Button(i18n("Clear the cache"), variant="stop", scale=0)
+
         with gr.Accordion(i18n("Separation settings management"), open=False):
             gr.Markdown(i18n("Save your current separation parameter settings or reset them to the application defaults"))
             with gr.Row():
@@ -198,6 +206,17 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
 
     name_template.submit(save_name_template, inputs=[name_template], outputs=[name_template],
                          api_visibility="undocumented")
+
+    def run_clear_cache():
+        removed = clear_workspace()
+        gr.Info(i18n("Cache cleared ({count} songs)").format(count=removed))
+        return _cache_size_text()
+
+    clear_cache.click(run_clear_cache, outputs=[cache_size], api_visibility="undocumented")
+
+
+def _cache_size_text() -> str:
+    return i18n("Cache size: {size} MB").format(size=round(workspace_size() / 2**20, 1))
 
 
 def _current_language(ctx: AppContext) -> str:

@@ -68,8 +68,8 @@ def invalid(result: dict) -> dict:
 
 def test_tabs(app):
     labels = [b.label for b in app.blocks.values() if type(b).__name__ == "Tab"]
-    assert labels == ["Separation", "BS/Mel Roformer", "MDX23C", "MDX-NET", "VR ARCH", "Demucs",
-                      "Themes", "Settings", "Credits"]
+    assert labels == ["Cover", "Voice conversion", "Separation", "BS/Mel Roformer", "MDX23C", "MDX-NET", "VR ARCH",
+                      "Demucs", "Voices", "Themes", "Settings", "Credits"]
 
 
 def test_telemetry_disabled(app):
@@ -274,3 +274,87 @@ def test_language_selector_shows_names(app):
     choices = dict((value, label) for label, value in selector.choices)
     assert choices["es_ES"] == "Español (es_ES)"
     assert choices["pt_BR"] == "Português (Brasil) (pt_BR)"
+
+
+# -- Cover, Voice conversion and Voices tabs ---------------------------------------------
+
+@pytest.fixture
+def voices(tmp_root, monkeypatch):
+    folder = tmp_root / "models" / "rvc" / "Singer"
+    folder.mkdir(parents=True)
+    (folder / "singer.pth").write_bytes(b"x")
+    monkeypatch.setattr(paths, "VOICE_MODELS_DIR", tmp_root / "models" / "rvc")
+    return tmp_root / "models" / "rvc"
+
+
+def test_cover_builds_the_pipeline_options(voices, ctx, tmp_root, monkeypatch):
+    from ai_cover_maker.core.pipeline.runner import CoverResult
+    from ai_cover_maker.ui.tabs import cover as cover_tab
+
+    seen = {}
+
+    class FakePipeline:
+        def __init__(self, **kwargs):
+            seen["init"] = kwargs
+
+        def run(self, song, options, progress=None):
+            seen["options"] = options
+            return CoverResult(tmp_root / "cover.wav", {"instrumental": tmp_root / "inst.wav"}, ["done"])
+
+    monkeypatch.setattr(cover_tab, "CoverPipeline", FakePipeline)
+    app = create_app(ctx)
+    fn = find_fn(app, "make_cover")
+    assert invalid(fn.validator(**kwargs_of(fn, voice=None))) == {
+        "Voice model": "Please select a voice model", "Song": "Please provide an input audio"}
+
+    kwargs = kwargs_of(fn, audio="song.wav", pitch=12.0, backing_pitch=-2.0, key_shift=1.0, reverb=True,
+                       karaoke_model="", backing_voice="Singer")
+    cover, inst, backing, log = fn.fn(**kwargs, progress=NoProgress())
+    options = seen["options"]
+    assert options.voice == "Singer" and options.vocals_model == "MelBand Roformer | Vocals by Kimberley Jensen"
+    assert options.karaoke_model is None and options.dereverb_model == "MelBand Roformer | De-Reverb by anvuew"
+    assert (options.rvc.pitch, options.backing_rvc.pitch, options.key_shift) == (12, -2, 1)
+    assert isinstance(options.rvc.pitch, int) and options.effects.reverb is True
+    assert cover.endswith("cover.wav") and backing["visible"] is False and log == "done"
+
+
+def test_cover_presets_fill_the_steps(voices, ctx):
+    app = create_app(ctx)
+    preset = next(f for f in app.fns.values() if getattr(f.fn, "__name__", "") == "apply_preset")
+    info, vocals, karaoke, dereverb, deecho, denoise = preset.fn("Fast")
+    assert vocals == "MelBand Roformer | Vocals by Kimberley Jensen" and karaoke == "" and dereverb == "UVR-DeEcho-DeReverb.pth"
+    assert "quickest" in info["info"]
+
+
+def test_voice_conversion(voices, ctx, tmp_root, monkeypatch):
+    from ai_cover_maker.ui.tabs import convert as convert_tab
+
+    calls = []
+
+    def fake_convert(source, out, voice, params, progress=None):
+        calls.append((voice.name, params.pitch, params.f0_autotune))
+        return out
+
+    monkeypatch.setattr(convert_tab.rvc_engine, "convert", fake_convert)
+    app = create_app(ctx)
+    fn = find_fn(app, "convert_voice")
+    assert invalid(fn.validator(**kwargs_of(fn, voice=None))) == {
+        "Voice model": "Please select a voice model", "Input vocals": "Please provide an input audio"}
+    out = fn.fn(**kwargs_of(fn, voice="Singer", audio=str(tmp_root / "vocals.wav"), pitch=3.0, f0_autotune=True),
+                progress=NoProgress())
+    assert out.endswith("vocals (Singer).wav") and calls == [("Singer", 3, True)]
+
+
+def test_voices_tab_upload_and_delete(voices, ctx, tmp_path):
+    app = create_app(ctx)
+    upload = find_fn(app, "upload_voice")
+    model = tmp_path / "other.pth"
+    model.write_bytes(b"x")
+    table, dropdown, status = upload.fn([str(model)], "Other")
+    assert ["Other", "other.pth", "—"] in table and "Other" in dropdown["choices"]
+    assert (voices / "Other" / "other.pth").is_file()
+
+    with pytest.raises(gr.Error):
+        upload.fn([str(model)], "")
+    table, _, _ = find_fn(app, "delete_voice").fn("Other")
+    assert [row[0] for row in table] == ["Singer"]

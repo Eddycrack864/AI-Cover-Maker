@@ -15,6 +15,7 @@ Status:
 - Phase 2 (app skeleton ported from UVR5-UI) is done.
 - Phase 3 (RVC engine, voices, effects, mixer) is done.
 - Phase 4 (cached cover pipeline, presets) is done.
+- Phase 5 (UI: Cover, Voice conversion, Voices tabs, cache settings, i18n) is done.
 - Phase notes are in `.claude/plans/0N-*.md`. The approved overall plan is
   `.claude/plans/00-feasibility-and-architecture.md`. Read it before starting a phase, and
 add a new plan file in `.claude/plans/` for each later phase.
