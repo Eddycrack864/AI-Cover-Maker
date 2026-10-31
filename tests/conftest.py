@@ -8,15 +8,20 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 
 def pytest_addoption(parser):
     parser.addoption("--network", action="store_true", help="also run the tests that need internet access")
+    parser.addoption("--slow", action="store_true", help="also run the tests that load real models (minutes on CPU)")
 
 
 def pytest_collection_modifyitems(config, items):
-    if config.getoption("--network"):
-        return
-    skip = pytest.mark.skip(reason="needs internet access: run pytest with --network")
-    for item in items:
-        if "network" in item.keywords:
-            item.add_marker(skip)
+    for marker, option, reason in (
+        ("network", "--network", "needs internet access: run pytest with --network"),
+        ("slow", "--slow", "loads real models: run pytest with --slow"),
+    ):
+        if config.getoption(option):
+            continue
+        skip = pytest.mark.skip(reason=reason)
+        for item in items:
+            if marker in item.keywords:
+                item.add_marker(skip)
 
 
 @pytest.fixture(autouse=True)

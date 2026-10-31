@@ -13,6 +13,7 @@ makes an AI song cover automatically: separate the song with python-audio-separa
 Status:
 - Phase 1 (dependency spike) is done.
 - Phase 2 (app skeleton ported from UVR5-UI) is done.
+- Phase 3 (RVC engine, voices, effects, mixer) is done.
 - Phase notes are in `.claude/plans/0N-*.md`. The approved overall plan is
   `.claude/plans/00-feasibility-and-architecture.md`. Read it before starting a phase, and
 add a new plan file in `.claude/plans/` for each later phase.
@@ -114,6 +115,7 @@ Run these with `.venv/Scripts/python.exe` in place of `python`.
   - `python -m pytest -q`: fast suite.
   - `python -m pytest tests/test_ui.py -k name`: a single test.
   - `--network` also runs the tests that download.
+  - `--slow` runs real models (`tests/test_integration.py`, needs `.local/samples/*.wav` and a voice in `models/rvc/`).
 - `python tools/i18n_scan.py --check --langs`: i18n completeness.
   - `--write` regenerates `en_US.json` from the `i18n("...")` / `N_("...")` calls.
   - The English string is the key. Every language file must have exactly the en_US keys; tests

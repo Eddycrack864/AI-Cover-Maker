@@ -13,7 +13,7 @@ from pathlib import Path
 
 from ai_cover_maker import paths
 from ai_cover_maker.core.audio import DEFAULT_NAME_TEMPLATE, check_name_template
-from ai_cover_maker.core.device import use_autocast
+from ai_cover_maker.core.device import gpu_lock, use_autocast
 from ai_cover_maker.core.downloads.model_downloader import ensure_downloaded
 from ai_cover_maker.core.models.catalog import Model
 from ai_cover_maker.core.separation.specs import ArchSpec, build_separator_kwargs
@@ -134,6 +134,6 @@ class SeparatorCache:
 
 separator_cache = SeparatorCache()
 
-# Held around every model load and separation. Gradio already queues separations one at a
+# Held around every model load and separation. Gradio already queues GPU jobs one at a
 # time; this also covers a cancelled event whose worker thread is still finishing a file.
-separation_lock = threading.Lock()
+separation_lock = gpu_lock
