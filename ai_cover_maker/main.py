@@ -4,7 +4,7 @@ import logging
 
 from ai_cover_maker import paths
 from ai_cover_maker.cli import parse_args
-from ai_cover_maker.config.store import migrate_legacy_user_data
+from ai_cover_maker.config.store import get_config, migrate_legacy_user_data
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -14,16 +14,23 @@ def main(argv: list[str] | None = None) -> None:
         logging.getLogger(noisy).setLevel(logging.WARNING)
     migrate_legacy_user_data()
 
+    from ai_cover_maker.integrations.discord_presence import presence
     from ai_cover_maker.ui.app import create_app, launch_kwargs
     from ai_cover_maker.ui.context import AppContext
 
-    ctx = AppContext.create()
-    create_app(ctx).queue().launch(
-        share=options.share,
-        favicon_path=str(paths.FAVICON),
-        server_name=options.server_name,
-        server_port=options.listen_port,
-        inbrowser=options.open_browser,
-        run_history=options.run_history,
-        **launch_kwargs(ctx),
-    )
+    if get_config().get("discord_presence", False):
+        presence.start()
+
+    try:
+        ctx = AppContext.create()
+        create_app(ctx).queue().launch(
+            share=options.share,
+            favicon_path=str(paths.FAVICON),
+            server_name=options.server_name,
+            server_port=options.listen_port,
+            inbrowser=options.open_browser,
+            run_history=options.run_history,
+            **launch_kwargs(ctx),
+        )
+    finally:
+        presence.stop()

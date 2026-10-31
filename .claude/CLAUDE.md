@@ -64,6 +64,10 @@ The package is `ai_cover_maker/`; `app.py` is a thin launcher.
 - `device.gpu_lock` (an `RLock`) wraps every model load and inference. On GPUs with 8 GB or less
   (`low_vram()`), the separator and the RVC voice are never loaded at the same time.
 
+`integrations/discord_presence.py`: optional Rich Presence (UVR5-UI port). Handlers wrap their work in
+`presence.track(<activity>)`. `CLIENT_ID` is the Discord app's Application ID; empty disables it. The
+image asset keys (`logo`, `idling`, `cover`, `convert`, separation ones) must exist in that Discord app.
+
 `ui/` follows UVR5-UI conventions:
 - Handlers use `inputs_kwargs`. The parameter names become the public API names, so components they
   would shadow are aliased (e.g. `audio_input`).

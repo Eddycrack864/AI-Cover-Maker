@@ -10,6 +10,7 @@ from ai_cover_maker.core.separation.runtime import RuntimeOptions
 from ai_cover_maker.core.separation.service import is_folder, separate_batch, separate_file
 from ai_cover_maker.core.separation.specs import ArchSpec
 from ai_cover_maker.i18n import N_, i18n
+from ai_cover_maker.integrations.discord_presence import presence
 from ai_cover_maker.ui import a11y, components, stem_mixer
 from ai_cover_maker.ui.adapters import GPU_CONCURRENCY_ID, filled, progress_callback, require, user_errors, validations
 from ai_cover_maker.ui.context import AppContext
@@ -76,10 +77,11 @@ def render_separation_tab(spec: ArchSpec, ctx: AppContext) -> SeparationTab:
         selected = _selected_model(ctx, spec, model)
         audio_path = require(audio, N_("Please provide an input audio"))
         notify_first_use(ctx, selected)
-        results = separate_file(
-            spec, selected, audio_path, output_format or DEFAULT_OUTPUT_FORMAT, values,
-            progress=progress_callback(progress), options=RuntimeOptions.from_config(ctx.config),
-        )
+        with presence.track(spec.id):
+            results = separate_file(
+                spec, selected, audio_path, output_format or DEFAULT_OUTPUT_FORMAT, values,
+                progress=progress_callback(progress), options=RuntimeOptions.from_config(ctx.config),
+            )
         return [*components.stem_updates(results), components.zip_update(results, audio_path)]
 
     def validate_single(model, output_format, audio, **values):
@@ -93,12 +95,13 @@ def render_separation_tab(spec: ArchSpec, ctx: AppContext) -> SeparationTab:
         selected = _selected_model(ctx, spec, model)
         notify_first_use(ctx, selected)
         lines = []
-        for line in separate_batch(
-            spec, selected, input_path, output_path, output_format or DEFAULT_OUTPUT_FORMAT, values,
-            progress=progress_callback(progress), options=RuntimeOptions.from_config(ctx.config),
-        ):
-            lines.append(line)
-            yield "\n".join(lines)
+        with presence.track(spec.id, batch=True):
+            for line in separate_batch(
+                spec, selected, input_path, output_path, output_format or DEFAULT_OUTPUT_FORMAT, values,
+                progress=progress_callback(progress), options=RuntimeOptions.from_config(ctx.config),
+            ):
+                lines.append(line)
+                yield "\n".join(lines)
 
     def validate_batch(model, output_format, input_path, output_path, **values):
         return validations(

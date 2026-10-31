@@ -117,6 +117,13 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
                 save_button = gr.Button(i18n("Save current settings"), variant="primary")
                 reset_button = gr.Button(i18n("Reset settings to default"), variant="primary")
 
+        with gr.Accordion(i18n("Discord Rich Presence"), open=False):
+            discord_presence = gr.Checkbox(
+                label=i18n("Show AI Cover Maker activity on Discord (Requires restarting the App)"),
+                value=bool(ctx.config.get("discord_presence", False)),
+                interactive=True,
+            )
+
         gr.Markdown(f"{i18n('Device')}: `{get_device()}`")
 
     # Language
@@ -213,6 +220,12 @@ def render_settings_tab(ctx: AppContext, separation_tabs: list[SeparationTab]) -
         return _cache_size_text()
 
     clear_cache.click(run_clear_cache, outputs=[cache_size], api_visibility="undocumented")
+
+    # Discord
+    def save_discord(enabled):
+        ctx.config.set("discord_presence", bool(enabled))
+
+    discord_presence.change(save_discord, inputs=[discord_presence], api_visibility="undocumented")
 
 
 def _cache_size_text() -> str:

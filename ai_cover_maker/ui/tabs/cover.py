@@ -11,6 +11,7 @@ from ai_cover_maker.core.pipeline.runner import CoverPipeline
 from ai_cover_maker.core.separation.runtime import RuntimeOptions
 from ai_cover_maker.core.separation.service import clean_path, is_folder
 from ai_cover_maker.i18n import N_, i18n
+from ai_cover_maker.integrations.discord_presence import presence
 from ai_cover_maker.ui import a11y, components
 from ai_cover_maker.ui.adapters import GPU_CONCURRENCY_ID, filled, progress_callback, require, user_errors, validations
 from ai_cover_maker.ui.context import AppContext
@@ -143,7 +144,8 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
     @user_errors
     def run(audio, progress=gr.Progress(), **values):
         song = require(audio, N_("Please provide an input audio"))
-        result = pipeline().run(song, build_options(values), progress=progress_callback(progress))
+        with presence.track("cover"):
+            result = pipeline().run(song, build_options(values), progress=progress_callback(progress))
         backing_path = result.stems.get("backing")
         return (str(result.cover), str(result.stems["instrumental"]),
                 gr.update(value=str(backing_path) if backing_path else None, visible=backing_path is not None),
@@ -163,10 +165,11 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
     def run_batch(input_path, output_path, progress=gr.Progress(), **values):
         options = build_options(values)
         lines = []
-        for line in pipeline(clean_path(output_path) or None).run_batch(clean_path(input_path), options,
-                                                                        progress=progress_callback(progress)):
-            lines.append(line)
-            yield "\n".join(lines)
+        with presence.track("cover", batch=True):
+            for line in pipeline(clean_path(output_path) or None).run_batch(clean_path(input_path), options,
+                                                                            progress=progress_callback(progress)):
+                lines.append(line)
+                yield "\n".join(lines)
 
     def validate_batch(input_path, output_path, **values):
         return validations(

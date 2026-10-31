@@ -8,6 +8,7 @@
     "override": false,
     "selected_lang": "en_US"
   },
+  "discord_presence": true,
   "load_custom_settings": false,
   "performance": {
     "precision": "auto",
