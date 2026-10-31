@@ -1,0 +1,115 @@
+"""Translations. The English source string is the lookup key in every language file."""
+
+import json
+import locale
+import logging
+from pathlib import Path
+
+from ai_cover_maker import paths
+from ai_cover_maker.config.store import ConfigStore, get_config
+
+logger = logging.getLogger(__name__)
+
+FALLBACK_LANGUAGE = "en_US"
+AUTO_LANGUAGE = "Language automatically detected by system"
+# Language files that were renamed; configs saved before the rename still use the old name.
+LEGACY_LANGUAGE_NAMES = {"fr-FR": "fr_FR", "ro-RO": "ro_RO"}
+# Shown in the language selector next to the code, in their own language
+LANGUAGE_NAMES = {
+    "ar_AR": "العربية", "de_DE": "Deutsch", "en_US": "English", "es_ES": "Español", "fr_FR": "Français",
+    "hi_IN": "हिन्दी", "id_ID": "Bahasa Indonesia", "it_IT": "Italiano", "ja_JP": "日本語", "ko_KR": "한국어",
+    "ms_MY": "Bahasa Melayu", "pt_BR": "Português (Brasil)", "ro_RO": "Română", "ru_RU": "Русский",
+    "th_TH": "ไทย", "tr_TR": "Türkçe", "uk_UA": "Українська", "vi_VN": "Tiếng Việt", "zh_CN": "简体中文",
+}
+
+
+def N_(text: str) -> str:
+    """Mark a string for translation without translating it yet.
+
+    Used in declarative specs whose labels are translated later at render time,
+    so ``tools/i18n_scan.py`` can still find them.
+    """
+    return text
+
+
+def normalize_language(language: str | None) -> str | None:
+    """Map a language name saved by an older version to its current file name."""
+    return LEGACY_LANGUAGE_NAMES.get(language, language)
+
+
+def _system_locale() -> str | None:
+    try:
+        lang = locale.getlocale()[0]
+    except ValueError:
+        lang = None
+    if not lang:
+        try:
+            lang = locale.getdefaultlocale()[0]
+        except ValueError:
+            lang = None
+    return lang
+
+
+class I18nAuto:
+    def __init__(self, language: str = None, config: ConfigStore = None, lang_dir: Path = None):
+        self.lang_dir = Path(lang_dir or paths.LANG_DIR)
+        config = config or get_config()
+
+        if language is None and config.get("lang.override", False):
+            language = normalize_language(config.get("lang.selected_lang", FALLBACK_LANGUAGE))
+        if language is None or not self.language_exists(language):
+            language = self._match_system_language(language)
+
+        self.language = language
+        self.language_map = self._load_language(language)
+
+    def _match_system_language(self, requested: str | None) -> str:
+        system = requested or _system_locale()
+        prefix = system[:2].lower() if system else "en"
+        matches = [lang for lang in self.available_languages() if lang.lower().startswith(prefix)]
+        return matches[0] if matches else FALLBACK_LANGUAGE
+
+    def _load_language(self, language: str) -> dict:
+        file_path = self.lang_dir / f"{language}.json"
+        try:
+            with open(file_path, "r", encoding="utf-8") as file:
+                data = json.load(file)
+        except (OSError, ValueError) as e:
+            logger.warning("Could not read language file '%s' (%s), using source strings", file_path, e)
+            return {}
+        if not isinstance(data, dict):
+            logger.warning("Language file '%s' is not a JSON object, using source strings", file_path)
+            return {}
+        return data
+
+    def available_languages(self) -> list[str]:
+        return sorted(path.stem for path in self.lang_dir.glob("*.json"))
+
+    def language_exists(self, language: str) -> bool:
+        return (self.lang_dir / f"{language}.json").exists()
+
+    def __call__(self, key: str) -> str:
+        return self.language_map.get(key, key)
+
+
+class _LazyI18n:
+    """Module-level ``i18n`` that loads the language on first use, not at import."""
+
+    _instance: I18nAuto | None = None
+
+    def _get(self) -> I18nAuto:
+        if self._instance is None:
+            self._instance = I18nAuto()
+        return self._instance
+
+    def reset(self, instance: I18nAuto = None) -> None:
+        self._instance = instance
+
+    def __call__(self, key: str) -> str:
+        return self._get()(key)
+
+    def __getattr__(self, name):
+        return getattr(self._get(), name)
+
+
+i18n = _LazyI18n()

@@ -10,8 +10,11 @@ makes an AI song cover automatically: separate the song with python-audio-separa
 (and optionally backing) vocals with RVC, apply effects, and remix. It must be installable locally
 (Windows/Linux scripts) and runnable on Google Colab.
 
-Status: Phase 1 (dependency spike) is done; see `.claude/plans/01-dependency-spike.md`. The approved
-overall plan is `.claude/plans/00-feasibility-and-architecture.md`. Read it before starting a phase, and
+Status:
+- Phase 1 (dependency spike) is done.
+- Phase 2 (app skeleton ported from UVR5-UI) is done.
+- Phase notes are in `.claude/plans/0N-*.md`. The approved overall plan is
+  `.claude/plans/00-feasibility-and-architecture.md`. Read it before starting a phase, and
 add a new plan file in `.claude/plans/` for each later phase.
 
 Work on the `dev` branch, not `main`. MPS support is postponed.
@@ -105,6 +108,16 @@ The package is `ai_cover_maker/`, mirroring `uvr5_ui/`. `app.py` is a thin launc
 
 ## Commands
 
+Run these with `.venv/Scripts/python.exe` in place of `python`.
+- `python app.py [--open] [--share] [--listen-port 7755] [--server-name 0.0.0.0]`: launch the UI.
+- Tests:
+  - `python -m pytest -q`: fast suite.
+  - `python -m pytest tests/test_ui.py -k name`: a single test.
+  - `--network` also runs the tests that download.
+- `python tools/i18n_scan.py --check --langs`: i18n completeness.
+  - `--write` regenerates `en_US.json` from the `i18n("...")` / `N_("...")` calls.
+  - The English string is the key. Every language file must have exactly the en_US keys; tests
+    enforce this.
 - `python tools/sync_applio.py [--source .reference/Applio]`: re-vendor Applio.
 - End-to-end stack check (writes to `.local/smoke/`):
   ```
@@ -114,6 +127,5 @@ The package is `ai_cover_maker/`, mirroring `uvr5_ui/`. `app.py` is a thin launc
   ```
 
 Planned, not built yet:
-- `run-AI-Cover-Maker.{bat,sh} [--open] [--share] [--listen-port 7755]`
+- `run-AI-Cover-Maker.{bat,sh}`
 - `AI-Cover-Maker-installer.{bat,sh}`
-- `pytest`, with `pytest -m gpu` for slow GPU tests.

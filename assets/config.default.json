@@ -1,0 +1,21 @@
+{
+  "theme": {
+    "file": null,
+    "class": "NoCrypt/miku",
+    "mode": "dark"
+  },
+  "lang": {
+    "override": false,
+    "selected_lang": "en_US"
+  },
+  "load_custom_settings": false,
+  "performance": {
+    "precision": "auto",
+    "torch_compile": false,
+    "chunk_duration": 0,
+    "use_soundfile": false
+  },
+  "output": {
+    "name_template": "{input}_({stem})_{model}"
+  }
+}

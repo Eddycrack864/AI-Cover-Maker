@@ -1,0 +1,6 @@
+# Tooling configuration only. Runtime dependencies live in requirements.txt.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+markers = ["network: needs internet access; skipped unless pytest runs with --network"]
