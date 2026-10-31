@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "presets": {
+    "Balanced": {
+      "description": "Roformer vocals, lead/backing split and de-reverb. A good default for most songs.",
+      "vocals": "MelBand Roformer | Vocals by Kimberley Jensen",
+      "karaoke": "Mel-Roformer-Karaoke-Aufr33-Viperx",
+      "dereverb": "MelBand Roformer | De-Reverb by anvuew",
+      "deecho": null,
+      "denoise": null
+    },
+    "Fast": {
+      "description": "Only vocals and de-reverb: quickest, best for a first listen or weak GPUs.",
+      "vocals": "MelBand Roformer | Vocals by Kimberley Jensen",
+      "karaoke": null,
+      "dereverb": "UVR-DeEcho-DeReverb.pth",
+      "deecho": null,
+      "denoise": null
+    },
+    "Best quality": {
+      "description": "Every cleanup step with the strongest models. Slowest.",
+      "vocals": "BS Roformer SW by jarredou",
+      "karaoke": "BS Roformer | Karaoke by anvuew",
+      "dereverb": "MelBand Roformer | De-Reverb by anvuew",
+      "deecho": "UVR-De-Echo-Normal.pth",
+      "denoise": "Mel-Roformer-Denoise-Aufr33"
+    }
+  }
+}
