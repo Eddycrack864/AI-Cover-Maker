@@ -21,20 +21,20 @@
 *.aiff
 *.ac3
 
-# Runtime data
-models/
-workspace/
-outputs/
-ytdl/
-user_data/
+# Runtime data (anchored: ai_cover_maker/core/models/ is code)
+/models/
+/workspace/
+/outputs/
+/ytdl/
+/user_data/
 assets/config.json
 
 # Environments
 .env
 .venv
-env/
-env_old/
-venv/
+/env/
+/env_old/
+/venv/
 
 # Python / tooling
 __pycache__/
