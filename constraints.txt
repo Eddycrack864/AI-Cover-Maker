@@ -1,0 +1,5 @@
+# Keeps the CUDA build of torch that the installers put in env/: without it, a dependency could
+# make "pip install --upgrade -r requirements.txt" replace it with a different torch from PyPI.
+# Only used by the installers; Colab keeps its own preinstalled torch.
+torch==2.7.1
+torchaudio==2.7.1

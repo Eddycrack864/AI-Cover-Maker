@@ -6,130 +6,139 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 AI-Cover-Maker is a from-scratch rewrite of the unmaintained
 [RVC-AI-Cover-Maker-UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI). It is a Gradio app that
-makes an AI song cover automatically: separate the song with python-audio-separator, convert the lead
-(and optionally backing) vocals with RVC, apply effects, and remix. It must be installable locally
-(Windows/Linux scripts) and runnable on Google Colab.
+makes an AI song cover automatically:
+1. Separate the song with python-audio-separator.
+2. Optionally split lead and backing vocals and clean the lead.
+3. Convert the vocals with RVC (vendored Applio inference).
+4. Apply effects and remix.
 
-Status:
-- Phase 1 (dependency spike) is done.
-- Phase 2 (app skeleton ported from UVR5-UI) is done.
-- Phase 3 (RVC engine, voices, effects, mixer) is done.
-- Phase 4 (cached cover pipeline, presets) is done.
-- Phase 5 (UI: Cover, Voice conversion, Voices tabs, cache settings, i18n) is done.
-- Phase notes are in `.claude/plans/0N-*.md`. The approved overall plan is
-  `.claude/plans/00-feasibility-and-architecture.md`. Read it before starting a phase, and
-add a new plan file in `.claude/plans/` for each later phase.
+It installs locally with Windows/Linux scripts and runs on Google Colab.
 
-Work on the `dev` branch, not `main`. MPS support is postponed.
-
-Code, comments, docs and commit messages are in English. The UI is translated through i18n
-(en_US, es_ES, pt_BR).
+- Work on the `dev` branch, not `main`.
+- MPS (Apple) support is postponed.
+- Code, comments, docs and commit messages are in English. The UI is translated through i18n
+  (en_US, es_ES, pt_BR).
+- History and decisions are in `.claude/plans/`:
+  - `00-feasibility-and-architecture.md` is the approved plan.
+  - `01`–`06` are per-phase notes.
+  - Add a new numbered file for each new piece of work.
 
 ## Reference repositories (`.reference/`, gitignored)
 
-Shallow clones kept locally so GitHub doesn't need to be queried. Never import from `.reference/` at
-runtime and never commit it. Refresh with `git -C .reference/<repo> pull --depth 1`. If the folder is
-missing, re-clone with `git clone --depth 1 https://github.com/<owner>/<repo>.git .reference/<repo>`.
+These are shallow clones kept locally so GitHub doesn't need to be queried.
+- Never import from `.reference/` at runtime and never commit it.
+- Refresh with `git -C .reference/<repo> pull --depth 1`.
 
-| Folder | Upstream | Role |
-|---|---|---|
-| `UVR5-UI/` | Eddycrack864/UVR5-UI | **App skeleton to copy from.** Layered `uvr5_ui/` package, Gradio 6, config store, i18n, themes, model catalog + resumable downloader, yt-dlp, installers/updaters, Colab notebook. Same author, MIT. |
-| `Applio/` | IAHispano/Applio | **RVC inference source.** Only the inference subset is vendored (see below). MIT, credit IAHispano. |
-| `RVC-AI-Cover-Maker-UI/` | Eddycrack864/RVC-AI-Cover-Maker-UI | Old app. Use it only to recover feature scope and UI options (`core.py`, `tabs/full_inference.py`). Don't copy its code: it has known bugs (string-compared autotune, ignored instrumental pitch, filename-keyword cache). |
+| Folder | Role |
+|---|---|
+| `UVR5-UI/` | Source of the app skeleton: config, i18n, themes, a11y, separation tabs, catalog, downloader, scripts, Colab. Same author. Port fixes both ways when relevant. |
+| `Applio/` | Source of `third_party/applio/` (inference only). |
+| `RVC-AI-Cover-Maker-UI/` | The old app. Use it only for feature scope; its code has known bugs. |
 
-## Target architecture
+## Architecture
 
-The package is `ai_cover_maker/`, mirroring `uvr5_ui/`. `app.py` is a thin launcher.
+The package is `ai_cover_maker/`; `app.py` is a thin launcher.
 
-- `paths.py`, `config/`, `i18n.py`, `cli.py`, `main.py`: ported from UVR5-UI.
-  - All paths resolve from the package location, never the current working directory.
-  - User preferences live in gitignored `user_data/` and are merged over `assets/config.default.json`.
-- `core/separation/`: UVR5-UI's cached `Separator` plus the global GPU lock. Every separation step
-  goes through audio-separator; there is no vendored MSST.
-- `core/rvc/`: adapter over the vendored Applio `VoiceConverter`, plus voice-model management and
-  predictor/embedder downloads.
-- `core/effects/`, `core/mix/`: pedalboard effects, key shift (preserves tempo), and gain/align/limit/export.
-- `core/pipeline/`: the Cover pipeline as declarative stages.
-  - Each stage output is cached under `workspace/<song-hash>/` with a key hashed from the input content,
-    model and params.
-  - Never cache by filename keywords.
-- `ui/tabs/`: Cover, Separation, Voice conversion, Mixer, Voices, Settings, Themes, Credits.
-  - Theme, css and js go to `launch()` (Gradio 6), not `gr.Blocks()`.
-  - GPU jobs share one concurrency id.
+`core/` has no Gradio imports, and modules import torch and audio_separator lazily (a test checks this):
+- `separation/`:
+  - Ported from UVR5-UI: `ArchSpec`s per architecture and `SeparatorCache`, which keeps the last
+    model loaded. Its cache key includes `output_dir`.
+  - Models come from `assets/models.json` and are downloaded to `models/separation/`.
+- `rvc/engine.py`:
+  - `RvcEngine` wraps Applio's `VoiceConverter`. `_setup_applio()` sets the `APPLIO_*` env vars and
+    `sys.path` before any `import rvc`; always go through `import_applio()`.
+  - `RvcParams` mirrors the `convert_audio` kwargs.
+- `rvc/voices.py`: voice models in `models/rvc/<folder>/`. A folder with several `.pth` files lists
+  one voice per file as `<folder>/<stem>`.
+- `rvc/assets.py`: predictor and embedder weights in `models/rvc_assets/`, downloaded resumably.
+- `effects/`, `mix/`: pedalboard vocal chain, tempo-preserving pitch shift, stereo mix with a -1 dBFS
+  limiter.
+- `pipeline/`:
+  - `CoverPipeline.run()` chains vocals → [karaoke] → [dereverb] → [deecho] → [denoise] → rvc_lead →
+    [rvc_backing | shift_backing] → [shift_instrumental] → mix.
+  - Each stage is cached in `workspace/<song>-<content hash>/<stage>-<key>/`. The key hashes the
+    model, its params and the **upstream stage's key**. Keep that chain intact when adding stages;
+    never cache by file name.
+  - `roles.py` picks the kept stem by normalized label, because separation models name stems
+    inconsistently.
+- `device.gpu_lock` (an `RLock`) wraps every model load and inference. On GPUs with 8 GB or less
+  (`low_vram()`), the separator and the RVC voice are never loaded at the same time.
+
+`ui/` follows UVR5-UI conventions:
+- Handlers use `inputs_kwargs`. The parameter names become the public API names, so components they
+  would shadow are aliased (e.g. `audio_input`).
+- Validators run before queueing.
+- GPU events share `concurrency_id=GPU_CONCURRENCY_ID`.
+- Every tab starts with `a11y.tab_heading`.
+- Theme, css and js go to `launch()` (Gradio 6).
+- Tabs: Cover, Voice conversion, Separation (5 architecture sub-tabs), Voices, Themes, Settings,
+  Credits.
 
 ### Vendored Applio (`third_party/applio/`)
-- Never edit these files by hand. Copy them from `.reference/Applio` with
-  `python tools/sync_applio.py`. The script holds the file list (`INCLUDE`) and checked text
-  replacements (`PATCHES`), and records the upstream commit in `UPSTREAM`. To change vendored
-  behaviour, add a patch entry there and re-run the script.
-- Keep `LICENSE` alongside the code.
-- Applio uses absolute imports (`from rvc.infer.infer import VoiceConverter`). The adapter
-  `core/rvc/engine.py` (see `setup_applio_env` in `tools/smoke_test.py`) must do these things before
-  importing `rvc`:
-  1. Set `APPLIO_ROOT`.
-  2. Set `APPLIO_MODELS_DIR` (`models/rvc_assets`), which holds the predictors and embedders and is
-     added by our patches.
-  3. Set `APPLIO_CONFIG_FILE` (`user_data/applio_config.json`) and `APPLIO_LOGS_DIR` (`models/rvc`).
-  4. Put `third_party/applio` on `sys.path`.
-- Current Applio API differs from older forks:
-  - No `split_audio`, `clean_audio`, `f0_file` or post-process effects.
-  - `hop_length` is ignored; `cleanup_mode` replaces noisereduce.
-  - f0 methods are `rmvpe`, `crepe`, `fcpe` and `swift`.
-  - Inference runs in fp32.
-- `Swift.py` imports `onnxruntime` at import time, so the env must contain exactly one onnxruntime
-  package: `onnxruntime-gpu`.
-- Required assets: `rmvpe.pt`, `fcpe.pt` and contentvec, from
-  `https://huggingface.co/IAHispano/Applio/resolve/main/Resources/`.
+- Never edit these files by hand. `tools/sync_applio.py` copies `INCLUDE` from `.reference/Applio`,
+  applies the checked text replacements in `PATCHES`, and writes `UPSTREAM`.
+- The current patches remove the cwd `sys.path` hack and resolve weights from `APPLIO_MODELS_DIR`.
+- Things that differ from old RVC forks:
+  - There is no `split_audio`, `f0_file` or post-processing.
+  - `hop_length` is ignored.
+  - Inference is fp32.
+- `Swift.py` imports onnxruntime at import time. Exactly one onnxruntime package must be installed:
+  `onnxruntime-gpu`.
 
-## Stack targets (to be confirmed by the Phase 1 dependency spike)
+## Stack (verified in Phase 1)
 
-- Python 3.12 (Colab's runtime); also test 3.13.
-- torch 2.7.1 + CUDA 12.8 (`https://download.pytorch.org/whl/cu128`), chosen to keep GTX 10xx support.
-  CPU fallback. MPS is experimental and opt-in.
-- `audio-separator[gpu]==0.47.0`, `onnxruntime-gpu<1.27`, `librosa<1.0`, `gradio==6.30.0`.
-- Plus Applio's inference deps: faiss-cpu, torchcrepe, torchfcpe, transformers, soxr, stftpitchshift,
-  einops. Plus pedalboard and yt-dlp.
+- Python 3.12.
+- torch/torchaudio 2.7.1 cu128, chosen to keep GTX 10xx support.
+- audio-separator 0.47.0, onnxruntime-gpu <1.27, librosa <1.0, gradio 6.30.0.
+- transformers 5.x, faiss-cpu, pedalboard.
+- `constraints.txt` pins torch so `pip install --upgrade -r requirements.txt` in the installers can't
+  replace the CUDA build. Colab doesn't use it and keeps its own torch.
 - FFmpeg must be on PATH.
 
-## Development environment
+## Development environment (this machine)
 
-- Never install into the user's global Python (3.10).
-- Use the standalone uv in `.tools/uv.exe` (gitignored) and the project venv `.venv` (Python 3.12,
-  managed by uv under `.tools/python`).
-- Recreate the env:
+- Never install into the user's global Python.
+- Use the standalone uv at `.tools/uv.exe` and the venv `.venv` (Python 3.12 under `.tools/python`).
+  Recreate it with:
   ```
   export UV_PYTHON_INSTALL_DIR="$PWD/.tools/python"
   .tools/uv.exe venv .venv --python 3.12
-  .tools/uv.exe pip install --python .venv/Scripts/python.exe torch==2.7.1 torchaudio==2.7.1 -r requirements.txt \
+  .tools/uv.exe pip install --python .venv/Scripts/python.exe torch==2.7.1 torchaudio==2.7.1 -r requirements-dev.txt \
       --extra-index-url https://download.pytorch.org/whl/cu128 --index-strategy unsafe-best-match
   ```
-- The dev machine has **no NVIDIA GPU** (Intel UHD only), so everything runs on CPU locally. CUDA has
-  to be verified by the user or on Colab.
+- **No NVIDIA GPU here** (Intel UHD), so everything runs on CPU. CUDA must be verified by the user or
+  on Colab.
 - Local test assets (gitignored):
-  - `.local/samples/test_edited.wav`: 12 s mono 40 kHz clip.
-  - `models/rvc/Atri/`: test voice, 3 `.pth` epochs + `added_IVF2604_Flat_nprobe_1_atri_v2.index`.
+  - `.local/samples/test_edited.wav`: 12 s mono clip.
+  - `models/rvc/Atri/`: test voice.
 
 ## Commands
 
-Run these with `.venv/Scripts/python.exe` in place of `python`.
-- `python app.py [--open] [--share] [--listen-port 7755] [--server-name 0.0.0.0]`: launch the UI.
+Use `.venv/Scripts/python.exe` as `python`.
+- `python app.py [--open] [--share] [--listen-port 7755] [--server-name 0.0.0.0]`
 - Tests:
-  - `python -m pytest -q`: fast suite.
-  - `python -m pytest tests/test_ui.py -k name`: a single test.
-  - `--network` also runs the tests that download.
-  - `--slow` runs real models (`tests/test_integration.py`, needs `.local/samples/*.wav` and a voice in `models/rvc/`).
-- `python tools/i18n_scan.py --check --langs`: i18n completeness.
-  - `--write` regenerates `en_US.json` from the `i18n("...")` / `N_("...")` calls.
-  - The English string is the key. Every language file must have exactly the en_US keys; tests
-    enforce this.
-- `python tools/sync_applio.py [--source .reference/Applio]`: re-vendor Applio.
-- End-to-end stack check (writes to `.local/smoke/`):
-  ```
-  python tools/smoke_test.py --input .local/samples/test_edited.wav \
-      --voice models/rvc/Atri/atri_e375_s6000.pth \
-      --index models/rvc/Atri/added_IVF2604_Flat_nprobe_1_atri_v2.index [--device cpu|cuda]
-  ```
+  - `python -m pytest -q`: fast suite with fakes.
+  - `python -m pytest tests/test_pipeline.py -k cache`: a single test.
+  - `--slow`: real separation and RVC with the local assets, a few minutes on CPU.
+  - `--network`: online catalog checks.
+- `python tools/i18n_scan.py --check --langs`
+  - `--write` regenerates `en_US.json`.
+  - The English string is the key; every language must have exactly the en_US keys.
+- `python tools/sync_applio.py`: re-vendor Applio.
+- `python tools/smoke_test.py --input <wav> --voice <pth> [--index <index>] [--device cpu|cuda]`:
+  dependency-level end-to-end check that does not use the app package.
 
-Planned, not built yet:
-- `run-AI-Cover-Maker.{bat,sh}`
-- `AI-Cover-Maker-installer.{bat,sh}`
+## Distribution
+
+- `AI-Cover-Maker-installer.{bat,sh}`, `AI-Cover-Maker-updater.{bat,sh}` and `run-AI-Cover-Maker.{bat,sh}`
+  are adapted from UVR5-UI.
+  - Version variables must match between `.bat` and `.sh`, and must match `constraints.txt`
+    (`tests/test_scripts.py`).
+  - **Never change the updater `.bat` above its "Do not edit" marker.** Its SHA-256 is pinned in the
+    tests.
+  - `.gitattributes` keeps `.bat` CRLF and `.sh` LF.
+- `AI_Cover_Maker_Colab.ipynb` is adapted from UVR5-UI's notebook.
+  - The repo URL and paths are rot13-encoded, as upstream.
+  - A `branch` param selects `main` or `dev`.
+  - Google Drive is symlinked into `models/` and `outputs/`.
+- CI is in `.github/workflows/tests.yml`: pytest and i18n on Ubuntu and Windows with CPU torch.
