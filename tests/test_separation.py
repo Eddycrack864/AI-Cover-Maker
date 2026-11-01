@@ -2,6 +2,7 @@ import inspect
 import json
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -37,6 +38,14 @@ class FakeSeparator:
 
     def load_model(self, model_filename):
         self.loaded.append(model_filename)
+
+    def download_file_if_not_exists(self, url, output_path):
+        Path(output_path).write_text(url)
+        if "interrupted" in url:
+            raise ConnectionError("connection reset")
+
+    def download_model_files(self, model_filename):
+        self.download_file_if_not_exists(f"https://github.com/{model_filename}", f"models/{model_filename}")
 
     def separate(self, path):
         if "corrupt" in str(path):
@@ -226,26 +235,14 @@ def test_core_does_not_import_gradio():
     assert out.stdout.strip() == "False"
 
 
-class FakeConfig(dict):
-    def get(self, key, default=None):
-        return super().get(key, default)
-
-
 def test_runtime_options(monkeypatch):
-    assert RuntimeOptions.from_config(FakeConfig()) == RuntimeOptions()
-    options = RuntimeOptions.from_config(FakeConfig({
-        "performance.precision": "native_fp16", "performance.torch_compile": True,
-        "performance.chunk_duration": "600", "performance.use_soundfile": True,
-    }))
-    assert options.separator_kwargs() == {"use_autocast": False, "use_native_fp16": True, "use_torch_compile": True,
-                                          "chunk_duration": 600.0, "use_soundfile": True}
-    bad = RuntimeOptions.from_config(FakeConfig({"performance.precision": "fp8", "performance.chunk_duration": "x"}))
-    assert bad.precision == "auto" and bad.chunk_duration == 0
-
     monkeypatch.setattr(runtime, "use_autocast", lambda: True)
-    assert RuntimeOptions().separator_kwargs()["use_autocast"] is True
-    assert RuntimeOptions().separator_kwargs()["chunk_duration"] is None
-    assert RuntimeOptions(precision="fp32").separator_kwargs()["use_autocast"] is False
+    assert RuntimeOptions().separator_kwargs() == {"use_autocast": True, "use_native_fp16": False,
+                                                   "use_torch_compile": False, "chunk_duration": None,
+                                                   "use_soundfile": False}
+    monkeypatch.setattr(runtime, "use_autocast", lambda: False)
+    assert RuntimeOptions().separator_kwargs()["use_autocast"] is False
+    assert "name_template" not in RuntimeOptions().separator_kwargs()
 
 
 def test_runtime_kwargs_are_accepted_by_audio_separator():
@@ -253,6 +250,8 @@ def test_runtime_kwargs_are_accepted_by_audio_separator():
     from audio_separator.separator import Separator
 
     assert set(RuntimeOptions().separator_kwargs()) <= set(inspect.signature(Separator.__init__).parameters)
+    # Used by the model download: audio-separator's own, made atomic
+    assert callable(Separator.download_model_files) and callable(Separator.download_file_if_not_exists)
 
 
 def test_runtime_options_reach_the_separator(cache, tmp_path):
@@ -288,8 +287,25 @@ def test_name_templates(tmp_path):
     assert rename_output(tmp_path / "missing_(Vocals)_m.wav", "{stem}").name == "missing_(Vocals)_m.wav"
 
 
-def test_runtime_options_name_template():
-    assert RuntimeOptions.from_config(FakeConfig({"output.name_template": "{stem}"})).name_template == "{stem}"
-    invalid = RuntimeOptions.from_config(FakeConfig({"output.name_template": "{input}"}))
-    assert invalid.name_template == DEFAULT_NAME_TEMPLATE
-    assert "name_template" not in RuntimeOptions().separator_kwargs()
+def test_audio_separator_downloads_are_atomic(tmp_path):
+    separator = FakeSeparator()
+    runtime.atomic_downloads(separator)
+    dest = tmp_path / "m.ckpt"
+    (tmp_path / "m.ckpt.download").write_text("left by a killed process")
+    with pytest.raises(ConnectionError):
+        separator.download_file_if_not_exists("https://x/interrupted", str(dest))
+    assert not dest.exists() and not (tmp_path / "m.ckpt.download").exists()
+
+    separator.download_file_if_not_exists("https://x/m.ckpt", str(dest))
+    assert dest.read_text() == "https://x/m.ckpt"
+    separator.download_file_if_not_exists("https://x/other", str(dest))  # already there
+    assert dest.read_text() == "https://x/m.ckpt"
+
+
+def test_missing_models_are_downloaded_by_audio_separator_first(cache, tmp_path, monkeypatch):
+    calls = []
+    monkeypatch.setattr(runtime, "ensure_downloaded",
+                        lambda model, models_dir, progress, native: calls.append((model, native)))
+    cache.get(MDXNET, MODEL, {}, tmp_path, "wav", models_dir=tmp_path)
+    (model, native), = calls
+    assert model == MODEL and callable(native)

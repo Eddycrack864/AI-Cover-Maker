@@ -7,7 +7,7 @@ import pytest
 
 from ai_cover_maker.core.downloads import model_downloader, ytdl
 from ai_cover_maker.core.downloads.model_downloader import (
-    METHOD_PYTHON, download_model, ensure_downloaded, file_urls, filename_from_url,
+    download_model, ensure_downloaded, file_urls, filename_from_url,
 )
 from ai_cover_maker.core.errors import DownloadError
 from ai_cover_maker.core.models.catalog import Model
@@ -28,7 +28,7 @@ def test_python_download_and_skip_existing(tmp_path):
     dest = tmp_path / "models"
     seen = []
 
-    log = list(download_model(model, "Hugging Face", METHOD_PYTHON, models_dir=dest,
+    log = list(download_model(model, "huggingface", models_dir=dest,
                               progress=lambda f, d: seen.append(f)))
 
     assert (dest / "weights.ckpt").read_bytes() == b"x" * 3000
@@ -37,7 +37,7 @@ def test_python_download_and_skip_existing(tmp_path):
     assert seen[-1] == 1.0
     assert not list(dest.glob("*.part"))
 
-    again = list(download_model(model, "Hugging Face", METHOD_PYTHON, models_dir=dest))
+    again = list(download_model(model, "huggingface", models_dir=dest))
     assert again == ["weights.ckpt already exists.", "config.yaml already exists."]
 
 
@@ -46,23 +46,12 @@ def test_source_mapping_uses_huggingface_urls(tmp_path, monkeypatch):
     monkeypatch.setattr(model_downloader, "_download_python", lambda url, dest, cb: used.append(url))
     model = Model("m", "mdxnet", "m.onnx", {"github": ["https://github.com/m.onnx"],
                                             "huggingface": ["https://huggingface.co/m.onnx"]})
-    list(download_model(model, "Hugging Face", METHOD_PYTHON, models_dir=tmp_path))
+    list(download_model(model, "huggingface", models_dir=tmp_path))
     assert used == ["https://huggingface.co/m.onnx"]
 
 
-def test_missing_external_tool_is_reported(tmp_path, monkeypatch):
-    def popen(*args, **kwargs):
-        raise FileNotFoundError("wget")
-    monkeypatch.setattr(model_downloader.subprocess, "Popen", popen)
-    model = Model("m", "mdxnet", "m.onnx", {"github": ["https://github.com/m.onnx"]})
-    log = list(download_model(model, "Github", "wget", models_dir=tmp_path))
-    assert log[-1] == "Error downloading m.onnx: 'wget' is not installed"
-
-
-def test_unsupported_method_and_no_urls(tmp_path):
-    model = Model("m", "demucs", "m.yaml")
-    assert list(download_model(model, "Github", "ftp", models_dir=tmp_path)) == ["Unsupported download method: ftp"]
-    assert "No URLs found" in list(download_model(model, "Github", METHOD_PYTHON, models_dir=tmp_path))[0]
+def test_no_urls(tmp_path):
+    assert "No URLs found" in list(download_model(Model("m", "demucs", "m.yaml"), "github", models_dir=tmp_path))[0]
 
 
 class FakeResponse:
@@ -103,7 +92,7 @@ def test_interrupted_download_resumes_from_the_partial_file(tmp_path, monkeypatc
     monkeypatch.setattr(model_downloader.urllib.request, "urlopen", urlopen)
     model = Model("m", "roformer", "m.ckpt", {"github": ["https://github.com/m.ckpt"]})
 
-    log = list(download_model(model, "Github", METHOD_PYTHON, models_dir=tmp_path))
+    log = list(download_model(model, "github", models_dir=tmp_path))
 
     assert ranges == [None, "bytes=4-"]
     assert (tmp_path / "m.ckpt").read_bytes() == data
@@ -116,7 +105,7 @@ def test_a_server_that_ignores_the_range_restarts_the_file(tmp_path, monkeypatch
     monkeypatch.setattr(model_downloader.urllib.request, "urlopen",
                         lambda request, timeout: FakeResponse(b"fresh data"))
     model = Model("m", "roformer", "m.ckpt", {"github": ["https://github.com/m.ckpt"]})
-    list(download_model(model, "Github", METHOD_PYTHON, models_dir=tmp_path))
+    list(download_model(model, "github", models_dir=tmp_path))
     assert (tmp_path / "m.ckpt").read_bytes() == b"fresh data"
 
 
@@ -129,7 +118,7 @@ def test_client_errors_are_not_retried(tmp_path, monkeypatch, no_retry_delay):
 
     monkeypatch.setattr(model_downloader.urllib.request, "urlopen", urlopen)
     model = Model("m", "roformer", "m.ckpt", {"github": ["https://github.com/m.ckpt"]})
-    log = list(download_model(model, "Github", METHOD_PYTHON, models_dir=tmp_path))
+    log = list(download_model(model, "github", models_dir=tmp_path))
     assert calls == ["https://github.com/m.ckpt"]
     assert log[-1] == "Error downloading m.ckpt from github.com: HTTP Error 404: Not Found"
 
@@ -141,7 +130,7 @@ FALLBACK_MODEL = Model("m", "roformer", "m.ckpt", {
 
 
 def test_file_urls_put_the_selected_source_first():
-    assert file_urls(FALLBACK_MODEL, "Hugging Face") == {
+    assert file_urls(FALLBACK_MODEL, "huggingface") == {
         "m.ckpt": ["https://huggingface.co/m.ckpt", "https://github.com/m.ckpt"],
         "m.yaml": ["https://huggingface.co/m.yaml", "https://github.com/m.yaml"],
     }
@@ -159,7 +148,7 @@ def test_a_failed_file_is_downloaded_from_the_other_source(tmp_path, monkeypatch
     monkeypatch.setattr(model_downloader, "_download_python", download)
     (tmp_path / "m.ckpt.part").write_text("partial from github")
 
-    log = list(download_model(FALLBACK_MODEL, "Github", METHOD_PYTHON, models_dir=tmp_path))
+    log = list(download_model(FALLBACK_MODEL, "github", models_dir=tmp_path))
 
     assert used == ["https://github.com/m.ckpt", "https://huggingface.co/m.ckpt", "https://github.com/m.yaml"]
     assert "Trying another source for m.ckpt..." in log
@@ -178,6 +167,49 @@ def test_ensure_downloaded(tmp_path, monkeypatch):
     ensure_downloaded(FALLBACK_MODEL, tmp_path)
     assert len(used) == 1  # nothing missing: no download at all
     ensure_downloaded(Model("x", "demucs", "x.yaml"), tmp_path)  # no sources: audio-separator handles it
+
+
+def test_audio_separator_downloads_first(tmp_path, monkeypatch):
+    used = []
+    monkeypatch.setattr(model_downloader, "_download_python", lambda url, dest, cb: (used.append(url), dest.touch()))
+
+    def native():
+        (tmp_path / "m.ckpt").touch()
+        (tmp_path / "m.yaml").touch()
+
+    ensure_downloaded(FALLBACK_MODEL, tmp_path, native=native)
+    assert used == []
+
+
+def test_github_then_huggingface_when_audio_separator_fails(tmp_path, monkeypatch):
+    used = []
+
+    def download(url, dest, on_fraction):
+        used.append(url)
+        if "github" in url:
+            raise ConnectionError("no connection")
+        dest.touch()
+
+    def native():
+        (tmp_path / "m.yaml").touch()  # got the config, then failed
+        raise RuntimeError("Failed to download file, response code: 404")
+
+    monkeypatch.setattr(model_downloader, "_download_python", download)
+    ensure_downloaded(FALLBACK_MODEL, tmp_path, native=native)
+    assert used == ["https://github.com/m.ckpt", "https://huggingface.co/m.ckpt"]
+    assert (tmp_path / "m.ckpt").exists()
+
+
+def test_an_interrupted_download_resumes_instead_of_using_audio_separator(tmp_path, monkeypatch):
+    used = []
+    monkeypatch.setattr(model_downloader, "_download_python", lambda url, dest, cb: (used.append(url), dest.touch()))
+    (tmp_path / "m.ckpt.part").write_bytes(b"half")
+
+    def native():
+        raise AssertionError("would start the download over")
+
+    ensure_downloaded(FALLBACK_MODEL, tmp_path, native=native)
+    assert used == ["https://github.com/m.ckpt", "https://github.com/m.yaml"]
 
 
 def test_ensure_downloaded_raises_when_every_source_fails(tmp_path, monkeypatch):

@@ -43,7 +43,11 @@ The package is `ai_cover_maker/`; `app.py` is a thin launcher.
 - `separation/`:
   - Ported from UVR5-UI: `ArchSpec`s per architecture and `SeparatorCache`, which keeps the last
     model loaded. Its cache key includes `output_dir`.
-  - Models come from `assets/models.json` and are downloaded to `models/separation/`.
+  - Models come from `assets/models.json` and are downloaded to `models/separation/` before loading
+    (`ensure_downloaded`): audio-separator's own download first (made atomic by
+    `runtime.atomic_downloads`), then our resumable download from GitHub, then Hugging Face. A pending
+    `.part` file skips audio-separator so it resumes.
+  - Precision is always "auto" (autocast on CUDA, FP32 otherwise); there are no performance settings.
   - There is no separation UI. Parameters are always UVR5 UI's defaults from
     `assets/default_settings.json` (`config/settings.py`); users can't change them.
 - `rvc/engine.py`:
@@ -51,7 +55,8 @@ The package is `ai_cover_maker/`; `app.py` is a thin launcher.
     `sys.path` before any `import rvc`; always go through `import_applio()`.
   - `RvcParams` mirrors the `convert_audio` kwargs.
 - `rvc/voices.py`: voice models in `models/rvc/<folder>/`. A folder with several `.pth` files lists
-  one voice per file as `<folder>/<stem>`.
+  one voice per file as `<folder>/<stem>`; they share the folder's index. Deleting one of them keeps the
+  rest and the index; deleting the last one deletes the folder.
 - `rvc/assets.py`: predictor and embedder weights in `models/rvc_assets/`, downloaded resumably.
 - `effects/`, `mix/`: pedalboard vocal chain, tempo-preserving pitch shift, stereo mix with a -1 dBFS
   limiter.
@@ -83,7 +88,11 @@ app only has the `logo`, `idling` and `cover` image assets: a new activity needs
 - Theme, css and js go to `launch()` (Gradio 6).
 - Tabs: Cover, Voices, Themes, Settings, Credits.
 - Long handlers that stream text run the core in a thread with `adapters.run_streaming()`; the
-  progress bar goes only on the main output (`show_progress_on`).
+  progress bars go on the audio outputs, never on the log (`show_progress_on`). Gradio quirks:
+  - A generator's yield hides its outputs' progress bars until the next progress report, so
+    `run_streaming` sends the last report again after each yield.
+  - A bar is drawn only over an empty player, so "Make cover!" first clears the players with a
+    js-only event and then runs the cover.
 - Buttons next to a dropdown or textbox go in `gr.Row(equal_height=True)` (a test checks this).
 
 ### Vendored Applio (`third_party/applio/`)

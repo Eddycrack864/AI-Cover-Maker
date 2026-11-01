@@ -8,11 +8,5 @@
     "override": false,
     "selected_lang": "en_US"
   },
-  "discord_presence": true,
-  "performance": {
-    "precision": "auto",
-    "torch_compile": false,
-    "chunk_duration": 0,
-    "use_soundfile": false
-  }
+  "discord_presence": true
 }

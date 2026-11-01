@@ -34,7 +34,7 @@ class RvcParams:
 
     pitch: int = 0  # semitones
     f0_method: str = "rmvpe"
-    index_rate: float = 0.5
+    index_rate: float = 0.75
     volume_envelope: float = 1.0  # 1 = keep the converted loudness, 0 = follow the input's
     protect: float = 0.33  # protect consonants/breaths; 0.5 disables it
     f0_autotune: bool = False

@@ -1,14 +1,13 @@
-"""Model downloads: resumable, with a fallback to the other source when one fails.
+"""Separation model downloads, before a model is loaded.
 
-Used by the alternative model downloader and before loading a model, so audio-separator
-never downloads catalog models itself: it writes straight to the final file name, and an
-interrupted download leaves a truncated model that it later takes as already downloaded.
+audio-separator's own download is tried first. When it fails, the catalog URLs are tried:
+GitHub, then Hugging Face. Those downloads are resumable: an interrupted one keeps its
+``.part`` file and the next attempt continues it.
 """
 
 import http.client
 import logging
 import os
-import subprocess
 import time
 import urllib.error
 import urllib.parse
@@ -24,11 +23,6 @@ from ai_cover_maker.core.models.catalog import Model
 logger = logging.getLogger(__name__)
 
 ProgressFn = Callable[[float, str], None]
-
-METHOD_PYTHON = "Python (built-in)"
-METHODS = [METHOD_PYTHON, "wget", "curl"]
-# UI label -> catalog source key
-SOURCES = {"Github": "github", "Hugging Face": "huggingface"}
 
 RETRIES = 5  # attempts per URL; each one resumes from the partial file
 _RETRY_DELAY = 2  # seconds, multiplied by the attempt number
@@ -91,31 +85,9 @@ def _download_python(url: str, dest: Path, on_fraction: Callable[[float], None])
     raise error
 
 
-def _download_external(method: str, url: str, dest: Path, on_fraction: Callable[[float], None]) -> None:
-    part = part_path(dest)
-    if method == "wget":
-        cmd = ["wget", "-c", f"--tries={RETRIES}", "--progress=bar:force", "-O", str(part), url]
-    else:
-        cmd = ["curl", "-L", "-f", "-#", "--retry", str(RETRIES), "-C", "-", "-o", str(part), url]
-
-    process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                               universal_newlines=True, bufsize=1)
-    for line in process.stderr:
-        try:
-            if method == "wget" and "%" in line:
-                on_fraction(int(line.strip().split("%")[0].split()[-1]) / 100)
-            elif method == "curl" and "#" in line:
-                on_fraction(min(line.count("#") / 50, 1.0))
-        except (ValueError, IndexError):
-            pass
-    if process.wait() != 0:
-        raise RuntimeError(f"{method} exited with code {process.returncode}")
-    os.replace(part, dest)
-
-
 def file_urls(model: Model, source: str) -> dict[str, list[str]]:
     """Each file of ``model`` with the URLs to try: ``source`` first, then the other sources."""
-    files = {filename_from_url(url): [url] for url in model.urls(SOURCES.get(source, source or "github"))}
+    files = {filename_from_url(url): [url] for url in model.urls(source)}
     for other in CATALOG_SOURCES:
         for url in model.sources.get(other) or []:
             urls = files.get(filename_from_url(url))
@@ -126,16 +98,12 @@ def file_urls(model: Model, source: str) -> dict[str, list[str]]:
 
 def download_model(
     model: Model,
-    source: str,
-    method: str,
+    source: str = "github",
     *,
     models_dir: Path = None,
     progress: ProgressFn = _noop_progress,
 ) -> Iterator[str]:
-    """Download every file of ``model`` (weights + config). Yields one log line at a time."""
-    if method not in METHODS:
-        yield f"Unsupported download method: {method}"
-        return
+    """Download every file of ``model`` (weights + config), ``source`` first. Yields one log line at a time."""
     files = file_urls(model, source)
     if not files:
         yield f"No URLs found for model '{model.id}' using source '{source}'."
@@ -164,15 +132,9 @@ def download_model(
                 yield f"Trying another source for {filename}..."
             yield f"Downloading {filename} from {host}..."
             try:
-                if method == METHOD_PYTHON:
-                    _download_python(url, dest, on_fraction)
-                else:
-                    _download_external(method, url, dest, on_fraction)
+                _download_python(url, dest, on_fraction)
                 yield f"{filename} downloaded successfully!"
                 break
-            except FileNotFoundError:
-                yield f"Error downloading {filename}: '{method}' is not installed"
-                return
             except Exception as e:
                 logger.warning("Download of %s failed: %s", url, e)
                 yield f"Error downloading {filename} from {host}: {e}"
@@ -180,17 +142,31 @@ def download_model(
     progress(1.0, "Download process completed")
 
 
-def ensure_downloaded(model: Model, models_dir: Path = None, progress: ProgressFn = None) -> None:
-    """Download the missing files of a catalog model before audio-separator loads it."""
+def ensure_downloaded(model: Model, models_dir: Path = None, progress: ProgressFn = None,
+                      native: Callable[[], object] = None) -> None:
+    """Download the missing files of a catalog model before audio-separator loads it.
+
+    ``native`` is audio-separator's own download (see ``runtime.atomic_downloads``). It is skipped
+    when one of our downloads was interrupted, so that one resumes instead of starting over.
+    """
     models_dir = Path(models_dir or paths.SEPARATION_MODELS_DIR)
-    missing = [name for name in file_urls(model, "github") if not (models_dir / name).exists()]
-    if not missing:
+    progress = progress or _noop_progress
+
+    def missing() -> list[str]:
+        return [name for name in file_urls(model, "github") if not (models_dir / name).exists()]
+
+    if not missing():
         return
-    for line in download_model(model, "github", METHOD_PYTHON, models_dir=models_dir,
-                               progress=progress or _noop_progress):
+    if native is not None and not any(part_path(models_dir / name).exists() for name in missing()):
+        progress(0.0, f"Downloading {model.id} with audio-separator...")
+        try:
+            native()
+        except Exception as e:
+            logger.warning("audio-separator could not download %s (%s), trying GitHub and Hugging Face",
+                           model.filename, e)
+        if not missing():
+            return
+    for line in download_model(model, "github", models_dir=models_dir, progress=progress):
         logger.info(line)
-    if failed := [name for name in missing if not (models_dir / name).exists()]:
-        raise DownloadError(
-            f"could not download {', '.join(failed)}. Run it again to resume the download, "
-            f"or use the alternative model downloader in Settings"
-        )
+    if failed := missing():
+        raise DownloadError(f"could not download {', '.join(failed)}. Run it again to resume the download")

@@ -190,10 +190,14 @@ def test_cover_builds_the_pipeline_options(voices, ctx, tmp_root, monkeypatch):
     assert (options.rvc.pitch, options.backing_rvc.pitch, options.key_shift) == (12, -2, 1)
     assert isinstance(options.rvc.pitch, int) and options.effects.reverb is True
     assert cover.endswith("cover.wav") and backing["visible"] is False and log == "done"
-    # Separation parameters are always the bundled defaults; performance options come from the settings
-    assert "separation_settings" not in seen["init"]
-    assert seen["init"]["runtime_options"].precision == ctx.config.get("performance.precision")
-    assert fn.show_progress_on == [cover_component(app, "Cover")]
+    # Separation parameters and precision are always the defaults
+    assert set(seen["init"]) == {"catalog", "outputs_dir"}
+    # The progress bars are on the audio players, never on the log
+    players = [cover_component(app, label) for label in ("Cover", "Instrumental", "Backing vocals")]
+    assert fn.show_progress_on == players
+    # ...over empty players: the browser clears them right before the cover starts
+    clear = next(f for f in app.fns.values() if f.fn is None and f.js and "null" in f.js)
+    assert [o._id for o in clear.outputs] == [p._id for p in players]
 
 
 def test_cover_presets_fill_the_steps(voices, ctx):
@@ -240,3 +244,22 @@ def test_cover_top_row_and_button_heights(voices, ctx):
         kinds = {type(c).__name__ for c in row}
         if "Button" in kinds and kinds & {"Dropdown", "Textbox"}:
             assert block.equal_height, [getattr(c, "label", None) or c.value for c in row]
+
+
+def test_run_streaming_repeats_the_progress_after_each_yield():
+    from ai_cover_maker.ui.adapters import run_streaming
+
+    reports = []
+
+    def work(emit, report):
+        report(0.5, "Converting")
+        emit("Converting...")
+        return "result"
+
+    def handler():
+        result = yield from run_streaming(work, progress=lambda fraction, desc: reports.append(fraction))
+        yield result
+
+    # A yield hides the progress bars until the next report, so the last one is sent again
+    assert list(handler()) == ["Converting...", "result"]
+    assert reports == [0.5, 0.5]

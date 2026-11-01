@@ -46,6 +46,9 @@ class WavSeparator:
     def load_model(self, model_filename):
         self.model = model_filename
 
+    def download_file_if_not_exists(self, url, output_path):
+        raise AssertionError("the test models are never downloaded")
+
     def separate(self, path):
         sf.info(path)  # unreadable audio fails, as in audio-separator
         WavSeparator.runs.append((self.model, Path(path).name))

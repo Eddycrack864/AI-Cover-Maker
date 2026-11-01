@@ -170,9 +170,21 @@ def download_voice(url: str, name: str = "", voices_dir: Path = None) -> Path:
 
 
 def delete_voice(name: str, voices_dir: Path = None) -> None:
-    """Delete a voice folder (``name`` is the folder, or a voice name inside it)."""
+    """Delete a voice: ``"<folder>"`` deletes the folder, ``"<folder>/<checkpoint>"`` only that checkpoint.
+
+    The checkpoints of a folder share its index, so the index stays while one of them is left;
+    deleting the last one deletes the whole folder.
+    """
     voices_dir = Path(voices_dir or paths.VOICE_MODELS_DIR)
     folder = (voices_dir / name.split("/", 1)[0]).resolve()
     if folder.parent != voices_dir.resolve() or not folder.is_dir() or folder.name in IGNORED_FOLDERS:
         raise DownloadError(f"Voice model not found: {name}")
+    if "/" in name:
+        models = [p for p in folder.iterdir() if p.is_file() and _is_model_file(p)]
+        model = next((p for p in models if p.stem == name.split("/", 1)[1]), None)
+        if model is None:
+            raise DownloadError(f"Voice model not found: {name}")
+        if len(models) > 1:
+            model.unlink()
+            return
     shutil.rmtree(folder)

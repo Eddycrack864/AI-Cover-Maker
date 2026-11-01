@@ -57,19 +57,26 @@ def user_errors(func):
     return wrapper
 
 
-def run_streaming(func, render=lambda message: message, poll: float = 0.2):
-    """Run ``func(emit)`` in a worker thread and yield ``render(value)`` for every value it emits.
+def run_streaming(func, render=lambda message: message, progress=None, poll: float = 0.2):
+    """Run ``func(emit, progress)`` in a worker thread and yield ``render(value)`` for every value it emits.
 
     Use it with ``result = yield from run_streaming(...)``: the return value is ``func``'s, and
     its exception is raised here. Gradio's context is copied to the thread, so ``gr.Progress``
-    keeps working inside ``func``.
+    keeps working inside ``func``. Every yield hides the progress bars of the event's outputs
+    until the next progress report, so the last report of ``progress`` is sent again after it.
     """
     messages = queue.Queue()
     outcome = {}
+    last = []
+
+    def report(fraction: float, desc: str) -> None:
+        last[:] = [fraction, desc]
+        if progress:
+            progress(fraction, desc)
 
     def target():
         try:
-            outcome["value"] = func(messages.put)
+            outcome["value"] = func(messages.put, report)
         except BaseException as e:
             outcome["error"] = e
 
@@ -79,7 +86,9 @@ def run_streaming(func, render=lambda message: message, poll: float = 0.2):
         try:
             yield render(messages.get(timeout=poll))
         except queue.Empty:
-            pass
+            continue
+        if progress and last:
+            progress(*last)
     if "error" in outcome:
         raise outcome["error"]
     return outcome["value"]

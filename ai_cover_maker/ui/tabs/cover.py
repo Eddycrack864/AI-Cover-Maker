@@ -8,7 +8,6 @@ from ai_cover_maker.core.downloads.ytdl import download_audio
 from ai_cover_maker.core.effects.chain import VocalEffects
 from ai_cover_maker.core.pipeline.options import OUTPUT_FORMATS, SEPARATION_STAGES, CoverOptions, load_presets, preset_options
 from ai_cover_maker.core.pipeline.runner import CoverPipeline
-from ai_cover_maker.core.separation.runtime import RuntimeOptions
 from ai_cover_maker.core.separation.service import clean_path, is_folder
 from ai_cover_maker.i18n import N_, i18n
 from ai_cover_maker.integrations.discord_presence import presence
@@ -52,7 +51,7 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
         # equal_height: buttons as tall as the dropdowns and textboxes next to them
         with gr.Row(equal_height=True):
             voice = voice_dropdown()
-            refresh = gr.Button(i18n("Refresh voice models"), variant="secondary", scale=0)
+            refresh = gr.Button(i18n("Refresh voice models"), variant="primary", scale=0)
             output_format = gr.Dropdown(OUTPUT_FORMATS, value="wav", label=i18n("Select the output format"),
                                         info=i18n("Of the cover and of every stem saved with it"))
         with gr.Row():
@@ -138,22 +137,22 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
         )
 
     def pipeline(output_dir=None) -> CoverPipeline:
-        # Separation parameters are always the bundled defaults
-        return CoverPipeline(catalog=ctx.catalog, runtime_options=RuntimeOptions.from_config(ctx.config),
-                             outputs_dir=output_dir)
+        # Separation parameters and precision are always the defaults
+        return CoverPipeline(catalog=ctx.catalog, outputs_dir=output_dir)
 
     @user_errors
     def run(audio, progress=gr.Progress(), **values):
         song = require(audio, N_("Please provide an input audio"))
         options = build_options(values)
 
-        def work(emit):
-            return pipeline().run(song, options, progress=progress_callback(progress), on_log=emit)
+        def work(emit, report):
+            return pipeline().run(song, options, progress=report, on_log=emit)
 
-        # The log shows each step as it happens; the progress bar is only on the cover
+        # The log shows each step as it happens; the progress bars are on the audio players
         with presence.track("cover"):
             result = yield from run_streaming(work, render=lambda lines: (gr.skip(), gr.skip(), gr.skip(),
-                                                                          "\n".join(lines)))
+                                                                          "\n".join(lines)),
+                                              progress=progress_callback(progress))
         backing_path = result.stems.get("backing")
         yield (str(result.cover), str(result.stems["instrumental"]),
                gr.update(value=str(backing_path) if backing_path else None, visible=backing_path is not None),
@@ -197,9 +196,14 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
     download.click(user_errors(lambda url: str(download_audio(url))), inputs=[link], outputs=[audio],
                    api_name="download_song")
 
-    event = make.click(run, inputs_kwargs={"audio": audio, **option_inputs},
+    # Gradio draws a progress bar only over an empty player, and not over one the running event
+    # has updated, so the previous cover is cleared in the browser before the cover starts
+    clear = make.click(None, js="() => [null, null, null]", outputs=[cover, instrumental, backing],
+                       api_visibility="undocumented")
+    event = clear.then(run, inputs_kwargs={"audio": audio, **option_inputs},
                        outputs=[cover, instrumental, backing, log], validator=validate, api_name="make_cover",
-                       show_progress_on=[cover], concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
+                       show_progress_on=[cover, instrumental, backing], concurrency_limit=1,
+                       concurrency_id=GPU_CONCURRENCY_ID)
     event.success(lambda: a11y.announce(i18n("Cover finished")), outputs=announcer, show_progress="hidden",
                   api_visibility="undocumented")
     batch_event = batch_button.click(run_batch, inputs_kwargs={"input_path": input_path, "output_path": output_path,

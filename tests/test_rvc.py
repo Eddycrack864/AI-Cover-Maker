@@ -86,9 +86,16 @@ def test_safe_folder_name():
 
 
 def test_delete_voice(voices_dir):
+    # One checkpoint of a folder: the others keep the shared index
     delete_voice("Atri/atri_e150", voices_dir)
+    assert sorted(p.name for p in (voices_dir / "Atri").iterdir()) == [
+        "added_IVF_atri.index", "atri_e300.pth", "trained_IVF_atri.index"]
+    # The last checkpoint takes the folder with it
+    delete_voice("Atri/atri_e300", voices_dir)
     assert not (voices_dir / "Atri").exists()
-    for bad in ("..", "zips", "Missing"):
+    delete_voice("Solo", voices_dir)
+    assert not (voices_dir / "Solo").exists()
+    for bad in ("..", "zips", "Missing", "NoIndex/missing"):
         with pytest.raises(DownloadError):
             delete_voice(bad, voices_dir)
 
