@@ -42,7 +42,7 @@ def create_app(ctx: AppContext = None) -> gr.Blocks:
             selectors = [cover.voice, cover.backing_voice]
             render_voices_tab((refresh_cover_voices, selectors, selectors))
             render_themes_tab(ctx)
-            render_settings_tab(ctx)
+            render_settings_tab(ctx, cover)
             render_credits_tab()
 
     return app

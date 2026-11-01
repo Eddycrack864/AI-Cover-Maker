@@ -43,6 +43,7 @@ DEFAULT_PRESET = "Balanced"
 class CoverTab:
     voice: gr.Dropdown
     backing_voice: gr.Dropdown
+    settings: dict[str, gr.components.Component]  # what "Save settings" stores, by default_settings() name
 
 
 def default_settings(presets: dict) -> dict:
@@ -140,13 +141,6 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
                 backing_gain = gr.Slider(-20, 10, value=initial["backing_gain_db"], step=0.5, label=i18n("Backing vocals volume (dB)"))
                 instrumental_gain = gr.Slider(-20, 10, value=initial["instrumental_gain_db"], step=0.5, label=i18n("Instrumental volume (dB)"))
 
-        with gr.Accordion(i18n("Save settings"), open=False):
-            gr.Markdown(i18n("Save the current settings of this tab to load them every time the app starts, "
-                             "or go back to the default settings"))
-            with gr.Row():
-                save_settings_button = gr.Button(i18n("Save current settings"), variant="primary")
-                reset_settings_button = gr.Button(i18n("Reset settings to default"), variant="primary")
-
         with gr.Accordion(i18n("Batch covers"), open=False):
             with gr.Row():
                 input_path = components.single_line_textbox(i18n("Input path"), i18n("Place the input path here"))
@@ -236,30 +230,12 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
             (input_path_box, is_folder(input_path), N_("The input path must be an existing folder")),
         )
 
-    # Saved settings: every option of the cover plus the preset
-    settings_inputs = {"preset": preset, **option_inputs}
-
-    @user_errors
-    def save_settings(*values):
-        ctx.cover_settings.save(dict(zip(settings_inputs, values)))
-        gr.Info(i18n("Settings saved. They will be loaded every time the app starts"))
-
-    @user_errors
-    def reset_settings():
-        ctx.cover_settings.reset()
-        defaults = default_settings(presets)  # the first voice may have changed since the app started
-        gr.Info(i18n("Settings reset to default"))
-        return [defaults[name] for name in settings_inputs]
-
     def apply_preset(name):
         chosen = presets.get(name) or {}
         kwargs = preset_options(chosen)
         return [gr.update(info=i18n(chosen.get("description", "")))] + [
             kwargs[f"{stage}_model"] or "" for stage in SEPARATION_STAGES]
 
-    save_settings_button.click(save_settings, inputs=list(settings_inputs.values()), api_visibility="undocumented")
-    reset_settings_button.click(reset_settings, outputs=list(settings_inputs.values()),
-                                api_visibility="undocumented")
     preset.change(apply_preset, inputs=[preset], outputs=[preset, *stages.values()], api_visibility="undocumented")
     refresh.click(refresh_cover_voices, inputs=[voice, backing_voice], outputs=[voice, backing_voice],
                   api_visibility="undocumented")
@@ -281,7 +257,8 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
                                      outputs=[batch_info], validator=validate_batch, api_name="make_covers_batch",
                                      concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
     stop_button.click(None, cancels=[batch_event], api_visibility="undocumented")
-    return CoverTab(voice=voice, backing_voice=backing_voice)
+    # Saved from the Settings tab: every option of the cover plus the preset
+    return CoverTab(voice=voice, backing_voice=backing_voice, settings={"preset": preset, **option_inputs})
 
 
 def backing_choices() -> list[tuple[str, str]]:
