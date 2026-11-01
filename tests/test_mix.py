@@ -60,6 +60,7 @@ def test_pitch_shift_keeps_duration_and_changes_key():
 
 def test_vocal_effects():
     wave = sine(seconds=0.5)
-    assert apply_effects(wave, SR, VocalEffects()).shape == (1, len(wave))  # all off: untouched
+    off = VocalEffects(highpass=False, compressor=False, reverb=False)
+    assert apply_effects(wave, SR, off).shape == (1, len(wave))  # all off: untouched
     wet = apply_effects(wave, SR, VocalEffects(reverb=True, highpass=True, compressor=True))
     assert wet.shape[0] == 2 and np.isfinite(wet).all()

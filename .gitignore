@@ -43,8 +43,8 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Claude Code local settings
-.claude/settings.local.json
+# Claude Code files (local only)
+.claude/
 
 # Local dev assets and tooling (test samples, standalone uv/python)
 .local/

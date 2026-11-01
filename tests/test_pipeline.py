@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 import soundfile as sf
 
+from ai_cover_maker.core.effects.chain import VocalEffects
 from ai_cover_maker.core.errors import AppError, SeparationError
 from ai_cover_maker.core.models.catalog import ModelCatalog
 from ai_cover_maker.core.pipeline.cache import SongWorkspace, clear_workspace, stage_key
@@ -21,6 +22,7 @@ from tests.conftest import REPO_ROOT
 SR = 44100
 VOCALS = "MelBand Roformer | Vocals by Kimberley Jensen"
 SIX_STEMS = "BS Roformer SW by jarredou"
+NO_EFFECTS = VocalEffects(highpass=False, compressor=False, reverb=False)
 KARAOKE = "Mel-Roformer-Karaoke-Aufr33-Viperx"
 DEREVERB = "MelBand Roformer | De-Reverb by anvuew"
 DEREVERB_VR = "UVR-DeEcho-DeReverb.pth"
@@ -109,7 +111,8 @@ def voice(tmp_path):
 
 
 def test_full_cover_and_cache(pipeline, song, voice):
-    options = CoverOptions(voice=voice, vocals_model=VOCALS, karaoke_model=KARAOKE, dereverb_model=DEREVERB)
+    options = CoverOptions(voice=voice, vocals_model=VOCALS, karaoke_model=KARAOKE, dereverb_model=DEREVERB,
+                           effects=NO_EFFECTS)
     logs = []
     result = pipeline.run(song, options, on_log=logs.append)
 
@@ -184,14 +187,13 @@ def test_backing_vocals_conversion(pipeline, song, voice):
 
 
 def test_multi_stem_model_sums_the_instrumental(pipeline, song, voice):
-    result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=SIX_STEMS))
+    result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=SIX_STEMS, effects=NO_EFFECTS))
     inst, _ = sf.read(result.stems["instrumental"])
     assert inst.shape == (SR // 2, 2) and np.abs(inst).max() > 0.2  # five sines summed
     assert result.stems["lead"].name == "My Song (Vocals, Singer).wav"
 
 
 def test_effects_add_a_processed_stem(pipeline, song, voice):
-    from ai_cover_maker.core.effects.chain import VocalEffects
 
     result = pipeline.run(song, CoverOptions(voice=voice, vocals_model=VOCALS, effects=VocalEffects(highpass=True)))
     assert result.stems["lead"].name == "My Song (Vocals, Singer, Effects).wav"

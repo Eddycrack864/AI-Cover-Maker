@@ -15,9 +15,10 @@ def voice_names() -> list[str]:
     return [v.name for v in list_voices()]
 
 
-def voice_dropdown(label: str = None) -> gr.Dropdown:
+def voice_dropdown(label: str = None, value: str = None) -> gr.Dropdown:
     names = voice_names()
-    return gr.Dropdown(label=label or i18n("Voice model"), choices=names, value=names[0] if names else None,
+    return gr.Dropdown(label=label or i18n("Voice model"), choices=names,
+                       value=value if value in names else (names[0] if names else None),
                        interactive=True, info=i18n("Voice models are kept in models/rvc. Add more in the Voices tab"))
 
 

@@ -22,7 +22,7 @@ from ai_cover_maker.core.audio import AUDIO_EXTENSIONS, DEFAULT_NAME_TEMPLATE, l
 from ai_cover_maker.core.device import gpu_lock, low_vram
 from ai_cover_maker.core.effects.chain import apply_effects, pitch_shift
 from ai_cover_maker.core.errors import AppError, MixError, SeparationError
-from ai_cover_maker.core.mix.mixer import Track, mix_tracks
+from ai_cover_maker.core.mix.mixer import BASE_LEVELS_DB, Track, mix_tracks
 from ai_cover_maker.core.models.catalog import ModelCatalog, get_catalog
 from ai_cover_maker.core.pipeline.cache import SongWorkspace, file_fingerprint, stage_key
 from ai_cover_maker.core.pipeline.options import OUTPUT_FORMATS, SEPARATION_STAGES, CoverOptions
@@ -316,9 +316,10 @@ class CoverPipeline:
                 processed_lead = write_audio(Path(tmp) / "lead.wav",
                                              apply_effects(load_audio(lead, lead_sr), lead_sr, options.effects), lead_sr)
                 exports = {**exports, f"{lead_label}, Effects": processed_lead}
-            tracks = [Track(instrumental, options.instrumental_gain_db), Track(processed_lead, options.lead_gain_db)]
+            tracks = [Track(instrumental, BASE_LEVELS_DB["instrumental"] + options.instrumental_gain_db),
+                      Track(processed_lead, BASE_LEVELS_DB["lead"] + options.lead_gain_db)]
             if backing is not None:
-                tracks.append(Track(backing, options.backing_gain_db))
+                tracks.append(Track(backing, BASE_LEVELS_DB["backing"] + options.backing_gain_db))
             mix_tracks(tracks, cover)
             saved = {path: _export_stem(path, folder / _stem_name(song, label, options.output_format))
                      for label, path in exports.items()}

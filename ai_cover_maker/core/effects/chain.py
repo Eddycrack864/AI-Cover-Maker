@@ -9,18 +9,22 @@ MAX_SEMITONES = 24
 
 @dataclass(frozen=True)
 class VocalEffects:
-    """Post-processing of the converted vocals. Every effect is off by default."""
+    """Post-processing of the converted lead vocals. Only the checked effects are applied.
 
-    highpass: bool = False
-    highpass_hz: float = 80.0
-    compressor: bool = False
-    compressor_threshold_db: float = -18.0
-    compressor_ratio: float = 3.0
-    reverb: bool = False
-    reverb_room_size: float = 0.5
-    reverb_damping: float = 0.5
-    reverb_wet_level: float = 0.33
-    reverb_dry_level: float = 0.4
+    The defaults are AICoverGen's chain, which it always applies: a 50 Hz high-pass, a gentle
+    compressor and a small, mostly dry room.
+    """
+
+    highpass: bool = True
+    highpass_hz: float = 50.0
+    compressor: bool = True
+    compressor_threshold_db: float = -15.0
+    compressor_ratio: float = 4.0
+    reverb: bool = True
+    reverb_room_size: float = 0.15
+    reverb_damping: float = 0.7
+    reverb_wet_level: float = 0.2
+    reverb_dry_level: float = 0.8
     reverb_width: float = 1.0
 
     @property

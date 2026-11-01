@@ -5,6 +5,7 @@ import pytest
 gr = pytest.importorskip("gradio")
 
 from ai_cover_maker import paths  # noqa: E402
+from ai_cover_maker.config.settings import CoverSettings  # noqa: E402
 from ai_cover_maker.config.store import ConfigStore  # noqa: E402
 from ai_cover_maker.core.models.catalog import ModelCatalog  # noqa: E402
 from ai_cover_maker.core.separation import runtime  # noqa: E402
@@ -29,7 +30,8 @@ def ctx(tmp_root, monkeypatch):
     FakeSeparator.instances.clear()
     config = ConfigStore(tmp_root / "assets" / "config.default.json", tmp_root / "user_data" / "config.json")
     config.set("theme.class", None)  # avoid fetching a Hub theme
-    return AppContext(config, ModelCatalog.from_file(tmp_root / "assets" / "models.json"))
+    return AppContext(config, ModelCatalog.from_file(tmp_root / "assets" / "models.json"),
+                      CoverSettings(tmp_root / "user_data" / "cover_settings.json"))
 
 
 @pytest.fixture
@@ -263,3 +265,43 @@ def test_run_streaming_repeats_the_progress_after_each_yield():
     # A yield hides the progress bars until the next report, so the last one is sent again
     assert list(handler()) == ["Converting...", "result"]
     assert reports == [0.5, 0.5]
+
+
+def test_cover_settings_are_saved_loaded_and_reset(voices, ctx):
+    from ai_cover_maker.core.pipeline.options import load_presets
+    from ai_cover_maker.ui.tabs.cover import default_settings
+
+    app = create_app(ctx)
+    save = next(f for f in app.fns.values() if getattr(f.fn, "__name__", "") == "save_settings")
+    names = [getattr(c, "label", None) for c in save.inputs]
+    values = [c.value for c in save.inputs]
+    values[names.index("Search feature ratio")] = 0.3
+    values[names.index("Reverb")] = True
+    values[names.index("Preset")] = "Fast"
+    save.fn(*values)
+    saved = ctx.cover_settings.load()
+    # Every saved setting has a default to go back to
+    assert set(saved) == set(default_settings(load_presets()))
+    assert (saved["index_rate"], saved["reverb"], saved["preset"]) == (0.3, True, "Fast")
+
+    # Loaded the next time the app starts; values that are no longer valid fall back to the default
+    ctx.cover_settings.save({**saved, "voice": "Deleted voice", "pitch": "high", "unknown": 1})
+    new_app = create_app(ctx)
+    inputs = next(f for f in new_app.fns.values() if getattr(f.fn, "__name__", "") == "save_settings").inputs
+    reloaded = {c.label: c.value for c in inputs}
+    assert (reloaded["Search feature ratio"], reloaded["Reverb"], reloaded["Preset"]) == (0.3, True, "Fast")
+    assert reloaded["Voice model"] == "Singer" and reloaded["Pitch"] == 0
+
+    reset = next(f for f in app.fns.values() if getattr(f.fn, "__name__", "") == "reset_settings")
+    defaults = dict(zip([c.label for c in reset.outputs], reset.fn()))
+    assert defaults["Search feature ratio"] == 0.75 and defaults["Preset"] == "Balanced"
+    assert ctx.cover_settings.load() == {} and not ctx.cover_settings.file.exists()
+
+
+def test_effect_settings_are_editable_only_while_the_effect_is_checked(app):
+    blocks = {getattr(b, "label", None): b for b in app.blocks.values()}
+    room = blocks["Room size"]
+    assert blocks["Reverb"].value is True and room.interactive is True
+    toggle = next(f for f in app.fns.values() if f.inputs == [blocks["Reverb"]])
+    assert room in toggle.outputs
+    assert all(update["interactive"] is False for update in toggle.fn(False))

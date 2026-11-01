@@ -9,6 +9,10 @@ from ai_cover_maker.core.audio import load_audio, write_audio
 from ai_cover_maker.core.errors import MixError
 
 DEFAULT_CEILING_DB = -1.0
+# Level of each track before the user's gain, as in AICoverGen: the lead vocals sit 3 dB above the
+# instrumental, and the sum has enough headroom that the limiter only catches the odd peak instead
+# of squashing the whole mix.
+BASE_LEVELS_DB = {"lead": -4.0, "backing": -6.0, "instrumental": -7.0}
 
 
 @dataclass(frozen=True)

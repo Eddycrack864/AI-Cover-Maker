@@ -1,6 +1,7 @@
 """The Cover tab: the whole pipeline in one click."""
 
-from dataclasses import dataclass, fields, replace
+import logging
+from dataclasses import asdict, dataclass, fields, replace
 
 import gradio as gr
 
@@ -8,6 +9,7 @@ from ai_cover_maker.core.downloads.ytdl import download_audio
 from ai_cover_maker.core.effects.chain import VocalEffects
 from ai_cover_maker.core.pipeline.options import OUTPUT_FORMATS, SEPARATION_STAGES, CoverOptions, load_presets, preset_options
 from ai_cover_maker.core.pipeline.runner import CoverPipeline
+from ai_cover_maker.core.rvc.engine import CLEANUP_MODES, EMBEDDERS, F0_METHODS, RvcParams
 from ai_cover_maker.core.separation.service import clean_path, is_folder
 from ai_cover_maker.i18n import N_, i18n
 from ai_cover_maker.integrations.discord_presence import presence
@@ -16,6 +18,8 @@ from ai_cover_maker.ui.adapters import (GPU_CONCURRENCY_ID, filled, progress_cal
                                         user_errors, validations)
 from ai_cover_maker.ui.context import AppContext
 from ai_cover_maker.ui.rvc_controls import refresh_voices, rvc_params, rvc_settings, voice_dropdown, voice_names
+
+logger = logging.getLogger(__name__)
 
 STAGE_LABELS = {
     "vocals": N_("Vocals / instrumental model"),
@@ -41,18 +45,59 @@ class CoverTab:
     backing_voice: gr.Dropdown
 
 
+def default_settings(presets: dict) -> dict:
+    """Every Cover setting the user can save, by handler parameter name, at its default value."""
+    stages = preset_options(presets[DEFAULT_PRESET])
+    rvc = {k: v for k, v in asdict(RvcParams()).items() if k != "sid"}
+    rvc["embedder_model_custom"] = rvc["embedder_model_custom"] or ""
+    names = voice_names()
+    return {
+        "voice": names[0] if names else None, "output_format": "wav", "preset": DEFAULT_PRESET,
+        **{f"{stage}_model": stages[f"{stage}_model"] or "" for stage in SEPARATION_STAGES},
+        **rvc, "backing_voice": "", "backing_pitch": 0, **asdict(VocalEffects()),
+        "key_shift": 0, "lead_gain_db": 0.0, "backing_gain_db": 0.0, "instrumental_gain_db": 0.0,
+    }
+
+
+def initial_settings(saved: dict, defaults: dict, choices: dict[str, list]) -> dict:
+    """``defaults`` with the saved values that are still valid (a saved voice or model may be gone)."""
+    values = dict(defaults)
+    for name, value in saved.items():
+        if name not in defaults or (name in choices and value not in choices[name]):
+            continue
+        default = defaults[name]
+        if default is None or _same_kind(value, default):
+            values[name] = value
+        else:
+            logger.warning("Ignoring the saved Cover setting %s=%r", name, value)
+    return values
+
+
+def _same_kind(value, default) -> bool:
+    if isinstance(default, bool) or isinstance(value, bool):
+        return isinstance(value, bool) and isinstance(default, bool)
+    if isinstance(default, (int, float)):
+        return isinstance(value, (int, float))
+    return isinstance(value, type(default))
+
+
 def render_cover_tab(ctx: AppContext) -> CoverTab:
     presets = load_presets()
-    initial = preset_options(presets[DEFAULT_PRESET])
     model_choices = components.model_choices(ctx.catalog, list(ctx.catalog))
+    model_ids = [""] + [m.id for m in ctx.catalog]
+    voices = voice_names()
+    choices = {"voice": voices, "backing_voice": ["", *voices], "preset": list(presets),
+               "output_format": OUTPUT_FORMATS, "f0_method": F0_METHODS, "embedder_model": EMBEDDERS,
+               "cleanup_mode": CLEANUP_MODES, **{f"{stage}_model": model_ids for stage in SEPARATION_STAGES}}
+    initial = initial_settings(ctx.cover_settings.load(), default_settings(presets), choices)
 
     with gr.TabItem(i18n("Cover")):
         a11y.tab_heading(i18n("Cover"))
         # equal_height: buttons as tall as the dropdowns and textboxes next to them
         with gr.Row(equal_height=True):
-            voice = voice_dropdown()
+            voice = voice_dropdown(value=initial["voice"])
             refresh = gr.Button(i18n("Refresh voice models"), variant="primary", scale=0)
-            output_format = gr.Dropdown(OUTPUT_FORMATS, value="wav", label=i18n("Select the output format"),
+            output_format = gr.Dropdown(OUTPUT_FORMATS, value=initial["output_format"], label=i18n("Select the output format"),
                                         info=i18n("Of the cover and of every stem saved with it"))
         with gr.Row():
             audio = gr.Audio(label=i18n("Song"), type="filepath", interactive=True)
@@ -64,36 +109,43 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
 
         with gr.Accordion(i18n("Separation steps"), open=False):
             with gr.Row():
-                preset = gr.Dropdown(list(presets), value=DEFAULT_PRESET, label=i18n("Preset"),
-                                     info=i18n(presets[DEFAULT_PRESET].get("description", "")), interactive=True)
+                preset = gr.Dropdown(list(presets), value=initial["preset"], label=i18n("Preset"),
+                                     info=i18n(presets[initial["preset"]].get("description", "")), interactive=True)
             stages = {}
             for stage in SEPARATION_STAGES:
                 optional = stage != "vocals"
                 choices = ([(i18n("Skip this step"), "")] if optional else []) + model_choices
-                stages[stage] = gr.Dropdown(choices, value=initial[f"{stage}_model"] or "", label=i18n(STAGE_LABELS[stage]),
+                stages[stage] = gr.Dropdown(choices, value=initial[f"{stage}_model"], label=i18n(STAGE_LABELS[stage]),
                                             info=i18n(STAGE_INFO[stage]), interactive=True)
 
         with gr.Accordion(i18n("Voice conversion settings"), open=False):
-            rvc = rvc_settings()
+            rvc = rvc_settings(rvc_params(initial))
 
         with gr.Accordion(i18n("Backing vocals"), open=False):
             gr.Markdown(i18n("Needs a lead / backing vocals model. Without a voice here the backing vocals keep the original singer"))
             with gr.Row():
-                backing_voice = gr.Dropdown(choices=backing_choices(), value="", label=i18n("Backing vocals voice model"),
+                backing_voice = gr.Dropdown(choices=backing_choices(), value=initial["backing_voice"], label=i18n("Backing vocals voice model"),
                                             interactive=True)
-                backing_pitch = gr.Slider(-24, 24, value=0, step=1, label=i18n("Backing vocals pitch"))
+                backing_pitch = gr.Slider(-24, 24, value=initial["backing_pitch"], step=1, label=i18n("Backing vocals pitch"))
 
         with gr.Accordion(i18n("Vocal effects"), open=False):
-            effects = _effects_controls()
+            effects = _effects_controls(VocalEffects(**{k: initial[k] for k in EFFECT_FIELDS}))
 
         with gr.Accordion(i18n("Mix"), open=False):
             with gr.Row():
-                key_shift = gr.Slider(-12, 12, value=0, step=1, label=i18n("Change the key of the song"),
+                key_shift = gr.Slider(-12, 12, value=initial["key_shift"], step=1, label=i18n("Change the key of the song"),
                                       info=i18n("Semitones for the whole song: instrumental and vocals, keeping the tempo"))
             with gr.Row():
-                lead_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Lead vocals volume (dB)"))
-                backing_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Backing vocals volume (dB)"))
-                instrumental_gain = gr.Slider(-20, 10, value=0, step=0.5, label=i18n("Instrumental volume (dB)"))
+                lead_gain = gr.Slider(-20, 10, value=initial["lead_gain_db"], step=0.5, label=i18n("Lead vocals volume (dB)"))
+                backing_gain = gr.Slider(-20, 10, value=initial["backing_gain_db"], step=0.5, label=i18n("Backing vocals volume (dB)"))
+                instrumental_gain = gr.Slider(-20, 10, value=initial["instrumental_gain_db"], step=0.5, label=i18n("Instrumental volume (dB)"))
+
+        with gr.Accordion(i18n("Save settings"), open=False):
+            gr.Markdown(i18n("Save the current settings of this tab to load them every time the app starts, "
+                             "or go back to the default settings"))
+            with gr.Row():
+                save_settings_button = gr.Button(i18n("Save current settings"), variant="primary")
+                reset_settings_button = gr.Button(i18n("Reset settings to default"), variant="primary")
 
         with gr.Accordion(i18n("Batch covers"), open=False):
             with gr.Row():
@@ -184,12 +236,30 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
             (input_path_box, is_folder(input_path), N_("The input path must be an existing folder")),
         )
 
+    # Saved settings: every option of the cover plus the preset
+    settings_inputs = {"preset": preset, **option_inputs}
+
+    @user_errors
+    def save_settings(*values):
+        ctx.cover_settings.save(dict(zip(settings_inputs, values)))
+        gr.Info(i18n("Settings saved. They will be loaded every time the app starts"))
+
+    @user_errors
+    def reset_settings():
+        ctx.cover_settings.reset()
+        defaults = default_settings(presets)  # the first voice may have changed since the app started
+        gr.Info(i18n("Settings reset to default"))
+        return [defaults[name] for name in settings_inputs]
+
     def apply_preset(name):
         chosen = presets.get(name) or {}
         kwargs = preset_options(chosen)
         return [gr.update(info=i18n(chosen.get("description", "")))] + [
             kwargs[f"{stage}_model"] or "" for stage in SEPARATION_STAGES]
 
+    save_settings_button.click(save_settings, inputs=list(settings_inputs.values()), api_visibility="undocumented")
+    reset_settings_button.click(reset_settings, outputs=list(settings_inputs.values()),
+                                api_visibility="undocumented")
     preset.change(apply_preset, inputs=[preset], outputs=[preset, *stages.values()], api_visibility="undocumented")
     refresh.click(refresh_cover_voices, inputs=[voice, backing_voice], outputs=[voice, backing_voice],
                   api_visibility="undocumented")
@@ -225,8 +295,7 @@ def refresh_cover_voices(voice, backing_voice):
     return refresh_voices(voice), gr.update(choices=choices, value=backing)
 
 
-def _effects_controls() -> dict:
-    d = VocalEffects()
+def _effects_controls(d: VocalEffects) -> dict:
     c = {}
     with gr.Row():
         c["highpass"] = gr.Checkbox(value=d.highpass, label=i18n("High-pass filter"), info=i18n("Removes rumble below the cutoff"))
@@ -243,4 +312,14 @@ def _effects_controls() -> dict:
         c["reverb_wet_level"] = gr.Slider(0, 1, value=d.reverb_wet_level, step=0.01, label=i18n("Wet level"))
         c["reverb_dry_level"] = gr.Slider(0, 1, value=d.reverb_dry_level, step=0.01, label=i18n("Dry level"))
         c["reverb_width"] = gr.Slider(0, 1, value=d.reverb_width, step=0.01, label=i18n("Width"))
+    # An effect's settings only apply while it is checked
+    for effect, settings in (("highpass", ["highpass_hz"]),
+                             ("compressor", ["compressor_threshold_db", "compressor_ratio"]),
+                             ("reverb", ["reverb_room_size", "reverb_damping", "reverb_wet_level",
+                                         "reverb_dry_level", "reverb_width"])):
+        outputs = [c[name] for name in settings]
+        for component in outputs:
+            component.interactive = getattr(d, effect)
+        c[effect].change(lambda on, n=len(outputs): [gr.update(interactive=on)] * n, inputs=[c[effect]],
+                         outputs=outputs, show_progress="hidden", api_visibility="undocumented")
     return c

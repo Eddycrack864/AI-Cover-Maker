@@ -16,6 +16,7 @@ MODELS_CATALOG_FILE = ASSETS_DIR / "models.json"
 USER_DATA_DIR = ROOT / "user_data"
 USER_CONFIG_FILE = USER_DATA_DIR / "config.json"
 CUSTOM_SETTINGS_FILE = USER_DATA_DIR / "custom_settings.json"
+COVER_SETTINGS_FILE = USER_DATA_DIR / "cover_settings.json"
 APPLIO_CONFIG_FILE = USER_DATA_DIR / "applio_config.json"
 
 # Pre-user_data locations, migrated into USER_DATA_DIR on startup
