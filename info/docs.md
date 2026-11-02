@@ -285,7 +285,10 @@ Contributions are welcome! Feel free to:
 Star the repository if you find it useful.
 
 ## Credits
-See the [Credits section of the README](https://github.com/Eddycrack864/AI-Cover-Maker#credits).
+AI Cover Maker continues [RVC AI Cover Maker UI](https://github.com/Eddycrack864/RVC-AI-Cover-Maker-UI), created by
+[ShiromiyaG](https://github.com/ShiromiyaG). Its features and ideas are the base of this rewrite.
+
+See the [Credits section of the README](https://github.com/Eddycrack864/AI-Cover-Maker#credits) for everyone else.
 
 ## Feedback and Support
 - **Troubleshooting**: check the [troubleshooting guide](troubleshooting.md).
