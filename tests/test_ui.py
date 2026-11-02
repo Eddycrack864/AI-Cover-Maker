@@ -310,3 +310,50 @@ def test_effect_settings_are_editable_only_while_the_effect_is_checked(app):
             updates = toggle.fn(on)
             assert set(updates) == set(toggle.outputs)
             assert all(update == {"__type__": "update", "interactive": on} for update in updates.values())
+
+
+def stage_dropdowns(app):
+    from ai_cover_maker.ui.tabs.cover import STAGE_LABELS
+
+    blocks = {getattr(b, "label", None): b for b in app.blocks.values() if type(b).__name__ == "Dropdown"}
+    return {stage: blocks[label] for stage, label in STAGE_LABELS.items()}
+
+
+def test_each_step_lists_its_own_models_unless_all_are_shown(voices, ctx):
+    app = create_app(ctx)
+    dropdowns = stage_dropdowns(app)
+    for stage, dropdown in dropdowns.items():
+        ids = [value for _, value in dropdown.choices if value]
+        assert ids == [m.id for m in ctx.catalog.recommended_first(ctx.catalog.for_stage(stage))], stage
+        assert ("" in [value for _, value in dropdown.choices]) == (stage != "vocals")
+    assert "UVR-MDX-NET-Inst_HQ_3.onnx" not in [v for _, v in dropdowns["vocals"].choices]
+
+    # "Show all models" sits next to the preset
+    row = next(b for b in app.blocks.values() if type(b).__name__ == "Row"
+               and any(getattr(c, "label", None) == "Show all models" for c in getattr(b, "children", [])
+                       + [g for f in b.children for g in getattr(f, "children", [])]))
+    labels = [getattr(c, "label", None) for f in row.children for c in (f.children if type(f).__name__ == "Form" else [f])]
+    assert labels == ["Preset", "Show all models"]
+
+    toggle = next(f for f in app.fns.values() if getattr(f.fn, "__name__", "") == "show_all_models")
+    assert toggle.outputs == list(dropdowns.values())
+    selected = ["UVR-MDX-NET-Voc_FT.onnx", "", "UVR-De-Echo-Normal.pth", "UVR-De-Echo-Normal.pth", ""]
+    shown = toggle.fn(True, "Balanced", *selected)
+    assert all(len(u["choices"]) == len(ctx.catalog) + (stage != "vocals")
+               for u, stage in zip(shown, dropdowns))
+    assert [u["value"] for u in shown] == selected  # every model fits when all are shown
+    # Hiding them again keeps what still fits its step; the rest goes back to the preset's model
+    selected[2] = "UVR-MDX-NET-Inst_HQ_3.onnx"
+    hidden = toggle.fn(False, "Balanced", *selected)
+    assert [u["value"] for u in hidden] == ["UVR-MDX-NET-Voc_FT.onnx", "", "MelBand Roformer | De-Reverb by anvuew",
+                                           "UVR-De-Echo-Normal.pth", ""]
+
+
+def test_a_saved_model_outside_its_step_needs_all_models_shown(voices, ctx):
+    ctx.cover_settings.save({"all_models": True, "vocals_model": "UVR-MDX-NET-Inst_HQ_3.onnx"})
+    dropdowns = stage_dropdowns(create_app(ctx))
+    assert dropdowns["vocals"].value == "UVR-MDX-NET-Inst_HQ_3.onnx"
+    assert len(dropdowns["vocals"].choices) == len(ctx.catalog)
+
+    ctx.cover_settings.save({"all_models": False, "vocals_model": "UVR-MDX-NET-Inst_HQ_3.onnx"})
+    assert stage_dropdowns(create_app(ctx))["vocals"].value == "MelBand Roformer | Vocals by Kimberley Jensen"

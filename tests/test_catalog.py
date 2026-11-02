@@ -122,3 +122,42 @@ def test_recommended_file_is_optional(tmp_path):
     catalog = ModelCatalog.from_file(tmp_path / "catalog.json")
     assert catalog.recommended_stems(catalog.find("a")) == ["Vocals"]
 
+
+
+# recommended_models.json stem -> the cover step it is recommended for
+RECOMMENDED_STAGES = {"Vocals": "vocals", "Karaoke": "karaoke", "De-Reverb": "dereverb", "De-Echo": "deecho",
+                      "Denoise": "denoise"}
+
+
+def test_every_model_has_valid_stages(catalog):
+    from ai_cover_maker.core.pipeline.options import SEPARATION_STAGES
+
+    data = json.loads((REPO_ROOT / "assets" / "models.json").read_text(encoding="utf-8"))
+    missing = [m["id"] for m in data["models"] if "stages" not in m]
+    assert not missing, f"Run tools/tag_model_stages.py --write, these models have no stages: {missing}"
+    invalid = {m.id: m.stages for m in catalog if not set(m.stages) <= set(SEPARATION_STAGES)}
+    assert not invalid
+    assert all(catalog.for_stage(stage) for stage in SEPARATION_STAGES)
+    assert not [m.id for m in catalog.by_arch("demucs") if m.stages]
+
+
+def test_presets_and_recommended_models_fit_their_step(catalog):
+    from ai_cover_maker.core.pipeline.options import SEPARATION_STAGES, load_presets
+
+    wrong = [(name, stage, preset[stage]) for name, preset in load_presets().items() for stage in SEPARATION_STAGES
+             if preset.get(stage) and stage not in catalog.find(preset[stage]).stages]
+    assert not wrong, f"Preset models not tagged for their step: {wrong}"
+    for stem, model_id in load_recommended(RECOMMENDED_FILE).items():
+        if stem in RECOMMENDED_STAGES:
+            assert RECOMMENDED_STAGES[stem] in catalog.find(model_id).stages, (stem, model_id)
+
+
+def test_models_for_a_stage(tmp_path):
+    (tmp_path / "catalog.json").write_text(json.dumps({"version": 2, "models": [
+        {"id": "a", "arch": "roformer", "filename": "a.ckpt", "stages": ["dereverb", "deecho"]},
+        {"id": "b", "arch": "roformer", "filename": "b.ckpt", "stages": []},
+        {"id": "c", "arch": "roformer", "filename": "c.ckpt"}]}))
+    catalog = ModelCatalog.from_file(tmp_path / "catalog.json")
+    assert [m.id for m in catalog.for_stage("deecho")] == ["a"]
+    assert catalog.find("a").stages == ("dereverb", "deecho") and catalog.find("c").stages == ()
+    assert catalog.for_stage("vocals") == []

@@ -4,6 +4,7 @@ from tools.check_model_links import (
     GITHUB_MODEL_CONFIGS, HF_MIRROR, LinkResult, build_report, huggingface_urls, model_files, print_report, summarize,
 )
 from tools.sync_models import arch_for, id_for, plan, working_sources
+from tools.tag_model_stages import Verdict
 
 GH = GITHUB_MODEL_CONFIGS
 
@@ -82,10 +83,11 @@ def test_plan_inserts_after_upstream_predecessor_and_fills_sources():
     working = {f"{GH}/b.ckpt", f"{HF_MIRROR}/roformers/b.ckpt", f"{HF_MIRROR}/roformers/c.ckpt", f"{GH}/sw.ckpt",
                f"{GH}/y.onnx"}
 
-    models, changes = plan(catalog, upstream, fake_checker(working))
+    tags = {"New B": Verdict(["vocals"], "name"), "y.onnx": Verdict([], "unknown", review=["no rule matched"])}
+    models, changes = plan(catalog, upstream, fake_checker(working), tag=lambda entry: tags[entry["id"]])
 
     assert [m["filename"] for m in models] == ["a.ckpt", "b.ckpt", "c.ckpt", "sw.ckpt", "x.onnx", "y.onnx"]
-    assert models[1] == {"id": "New B", "arch": "roformer", "filename": "b.ckpt",
+    assert models[1] == {"id": "New B", "arch": "roformer", "filename": "b.ckpt", "stages": ["vocals"],
                          "sources": {"github": [f"{GH}/b.ckpt"], "huggingface": [f"{HF_MIRROR}/roformers/b.ckpt"]}}
     assert models[2]["sources"]["huggingface"] == [f"{HF_MIRROR}/roformers/c.ckpt"]
     assert models[3]["sources"] == {"github": [f"{GH}/sw.ckpt"]}
@@ -93,8 +95,58 @@ def test_plan_inserts_after_upstream_predecessor_and_fills_sources():
     assert changes == [
         "fill huggingface of [roformer] c.ckpt",
         "fill github of [roformer] sw.ckpt",
-        "add [roformer] New B",
-        "add [mdxnet] y.onnx (no huggingface source yet)",
+        "add [roformer] New B (steps: vocals)",
+        "add [mdxnet] y.onnx (no huggingface source yet; steps: none; "
+        "review the steps in tools/tag_model_stages.py: no rule matched)",
     ]
     assert catalog[1]["sources"] == {"github": [f"{GH}/c.ckpt"]}  # the input is not modified
     assert plan(models, upstream, fake_checker(working))[1] == []
+
+
+def _model(model_id, arch="roformer", filename=None):
+    return {"id": model_id, "arch": arch, "filename": filename or f"{model_id}.ckpt"}
+
+
+def _config(target, instruments=("Vocals", "Instrumental")):
+    return {"training": {"target_instrument": target, "instruments": list(instruments)}}
+
+
+def test_stage_tags_come_from_the_name_the_config_and_the_stems():
+    from tools.tag_model_stages import classify
+
+    def stages(model, config=None, stems=None):
+        return classify(model, config, stems).stages
+
+    assert stages(_model("BS Roformer | Karaoke by x"), _config("Vocals")) == ["karaoke"]
+    assert stages(_model("UVR-DeEcho-DeReverb.pth", "vrarch"), stems=["Dry", "No Dry"]) == ["dereverb", "deecho"]
+    assert stages(_model("Reverb_HQ_By_FoxJoy.onnx", "mdxnet")) == ["dereverb"]
+    # The config's target decides between vocal and instrumental models, whatever the name
+    assert stages(_model("MelBand Roformer | Big Beta 6 by unwa"), _config("vocals")) == ["vocals"]
+    assert stages(_model("MelBand Roformer | Vocals FV1 by x"), _config("Instrumental")) == []
+    # Only vocal models in the vocals step; models trained on both stems are vocal models too
+    assert stages(_model("UVR-MDX-NET-Inst_Main.onnx", "mdxnet")) == []
+    assert stages(_model("MDX23C-8KFFT-InstVoc_HQ.ckpt", "mdx23c")) == ["vocals"]
+    assert stages(_model("UVR-MDX-NET_Main_340.onnx", "mdxnet")) == ["vocals"]
+    assert stages(_model("BS Roformer SW by x"), _config(None, ["bass", "drums", "vocals"])) == ["vocals"]
+    assert stages(_model("htdemucs.yaml", "demucs"), stems=["vocals", "drums", "bass", "other"]) == []
+    assert stages(_model("9_HP2-UVR.pth", "vrarch"), stems=["vocals", "instrumental"]) == []
+    assert stages(_model("kuielab_a_drums.onnx", "mdxnet"), stems=["drums", "nodrums"]) == []
+    # Overrides win over the rules
+    assert stages(_model("UVR_MDXNET_9482.onnx", "mdxnet")) == ["vocals"]
+
+
+def test_stage_tags_report_what_needs_a_look():
+    from tools.tag_model_stages import classify
+
+    # A denoise model whose stems the denoise step can't keep from
+    verdict = classify(_model("Some Denoise model"), _config(None, ["Instrumental", "Vocals"]), None)
+    assert verdict.stages == ["denoise"] and verdict.review
+    assert classify(_model("mystery.onnx", "mdxnet"), None, None).review == ["no rule matched"]
+    assert not classify(_model("UVR-DeNoise.pth", "vrarch"), None, ["Noise", "No Noise"]).review
+
+
+def test_stages_go_after_the_filename():
+    from tools.tag_model_stages import with_stages
+
+    entry = with_stages({"id": "a", "arch": "x", "filename": "a.ckpt", "sources": {}, "stages": ["old"]}, ["vocals"])
+    assert list(entry) == ["id", "arch", "filename", "stages", "sources"] and entry["stages"] == ["vocals"]

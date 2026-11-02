@@ -21,6 +21,8 @@ class Model:
     arch: str
     filename: str  # what audio-separator loads
     sources: dict = field(default_factory=dict, compare=False, hash=False)
+    # The cover steps it fits ("vocals", "karaoke"...), see tools/tag_model_stages.py
+    stages: tuple[str, ...] = field(default=(), compare=False, hash=False)
 
     def urls(self, source: str) -> list[str]:
         """Download URLs for ``source``, falling back to any other available source."""
@@ -54,7 +56,8 @@ class ModelCatalog:
             data = json.load(f)
         if data.get("version") != 2:
             raise ValueError(f"Unsupported model catalog version in {path}: {data.get('version')}")
-        models = [Model(m["id"], m["arch"], m["filename"], m.get("sources", {})) for m in data["models"]]
+        models = [Model(m["id"], m["arch"], m["filename"], m.get("sources", {}), tuple(m.get("stages", ())))
+                  for m in data["models"]]
         return cls(models, load_recommended(recommended_path or path.with_name(RECOMMENDED_FILE_NAME)))
 
     def __iter__(self):
@@ -62,6 +65,10 @@ class ModelCatalog:
 
     def __len__(self):
         return len(self._models)
+
+    def for_stage(self, stage: str) -> list[Model]:
+        """The models tagged for the cover step ``stage``, in catalog order."""
+        return [m for m in self._models if stage in m.stages]
 
     def by_arch(self, arch: str) -> list[Model]:
         return [m for m in self._models if m.arch == arch]

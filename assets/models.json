@@ -5,6 +5,9 @@
       "id": "BS-Roformer-Viperx-1297",
       "arch": "roformer",
       "filename": "model_bs_roformer_ep_317_sdr_12.9755.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/model_bs_roformer_ep_317_sdr_12.9755.ckpt",
@@ -20,6 +23,9 @@
       "id": "BS-Roformer-Viperx-1296",
       "arch": "roformer",
       "filename": "model_bs_roformer_ep_368_sdr_12.9628.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/model_bs_roformer_ep_368_sdr_12.9628.ckpt",
@@ -35,6 +41,7 @@
       "id": "BS-Roformer-Viperx-1053",
       "arch": "roformer",
       "filename": "model_bs_roformer_ep_937_sdr_10.5309.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/model_bs_roformer_ep_937_sdr_10.5309.ckpt",
@@ -50,6 +57,9 @@
       "id": "Mel-Roformer-Viperx-1143",
       "arch": "roformer",
       "filename": "model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/model_mel_band_roformer_ep_3005_sdr_11.4360.ckpt",
@@ -65,6 +75,9 @@
       "id": "BS-Roformer-De-Reverb",
       "arch": "roformer",
       "filename": "deverb_bs_roformer_8_384dim_10depth.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/deverb_bs_roformer_8_384dim_10depth.ckpt",
@@ -80,6 +93,7 @@
       "id": "Mel-Roformer-Crowd-Aufr33-Viperx",
       "arch": "roformer",
       "filename": "mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_crowd_aufr33_viperx_sdr_8.7144.ckpt",
@@ -95,6 +109,9 @@
       "id": "Mel-Roformer-Denoise-Aufr33",
       "arch": "roformer",
       "filename": "denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
+      "stages": [
+        "denoise"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/denoise_mel_band_roformer_aufr33_sdr_27.9959.ckpt",
@@ -110,6 +127,9 @@
       "id": "Mel-Roformer-Denoise-Aufr33-Aggr",
       "arch": "roformer",
       "filename": "denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
+      "stages": [
+        "denoise"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/denoise_mel_band_roformer_aufr33_aggr_sdr_27.9768.ckpt",
@@ -125,6 +145,7 @@
       "id": "MelBand Roformer | Denoise-Debleed by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_denoise_debleed_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_denoise_debleed_gabox.ckpt",
@@ -140,6 +161,9 @@
       "id": "Mel-Roformer-Karaoke-Aufr33-Viperx",
       "arch": "roformer",
       "filename": "mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_karaoke_aufr33_viperx_sdr_10.1956.ckpt",
@@ -155,6 +179,9 @@
       "id": "MelBand Roformer | Karaoke by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_karaoke_gabox.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_karaoke_gabox.ckpt",
@@ -170,6 +197,9 @@
       "id": "MelBand Roformer | Karaoke V2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_karaoke_gabox_v2.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_karaoke_gabox_v2.ckpt",
@@ -185,6 +215,9 @@
       "id": "MelBand Roformer | Karaoke by becruily",
       "arch": "roformer",
       "filename": "mel_band_roformer_karaoke_becruily.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_karaoke_becruily.ckpt",
@@ -200,6 +233,9 @@
       "id": "BS Roformer | Karaoke by frazer-becruily",
       "arch": "roformer",
       "filename": "bs_roformer_karaoke_frazer_becruily.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_karaoke_frazer_becruily.ckpt",
@@ -215,6 +251,9 @@
       "id": "BS Roformer | Karaoke by anvuew",
       "arch": "roformer",
       "filename": "bs_roformer_karaoke_anvuew.ckpt",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_karaoke_anvuew.ckpt",
@@ -230,6 +269,9 @@
       "id": "MelBand Roformer | Vocals by Kimberley Jensen",
       "arch": "roformer",
       "filename": "vocals_mel_band_roformer.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/vocals_mel_band_roformer.ckpt",
@@ -245,6 +287,9 @@
       "id": "MelBand Roformer Kim | FT by unwa",
       "arch": "roformer",
       "filename": "mel_band_roformer_kim_ft_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_kim_ft_unwa.ckpt",
@@ -260,6 +305,9 @@
       "id": "MelBand Roformer Kim | FT 2 by unwa",
       "arch": "roformer",
       "filename": "mel_band_roformer_kim_ft2_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_kim_ft2_unwa.ckpt",
@@ -275,6 +323,9 @@
       "id": "MelBand Roformer Kim | FT 2 Bleedless by unwa",
       "arch": "roformer",
       "filename": "mel_band_roformer_kim_ft2_bleedless_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_kim_ft2_bleedless_unwa.ckpt",
@@ -290,6 +341,9 @@
       "id": "MelBand Roformer Kim | FT 3 by unwa",
       "arch": "roformer",
       "filename": "mel_band_roformer_kim_ft3_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_kim_ft3_unwa.ckpt",
@@ -305,6 +359,7 @@
       "id": "MelBand Roformer Kim | Inst V1 by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_inst_v1.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_inst_v1.ckpt",
@@ -320,6 +375,7 @@
       "id": "MelBand Roformer Kim | Inst V1 Plus by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_inst_v1_plus.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_inst_v1_plus.ckpt",
@@ -335,6 +391,7 @@
       "id": "MelBand Roformer Kim | Inst V1 (E) by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_inst_v1e.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_inst_v1e.ckpt",
@@ -350,6 +407,7 @@
       "id": "MelBand Roformer Kim | Inst V1 (E) Plus by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_inst_v1e_plus.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_inst_v1e_plus.ckpt",
@@ -365,6 +423,7 @@
       "id": "MelBand Roformer Kim | Inst V2 by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_inst_v2.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_inst_v2.ckpt",
@@ -380,6 +439,9 @@
       "id": "MelBand Roformer Kim | InstVoc Duality V1 by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_instvoc_duality_v1.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_instvoc_duality_v1.ckpt",
@@ -395,6 +457,9 @@
       "id": "MelBand Roformer Kim | InstVoc Duality V2 by Unwa",
       "arch": "roformer",
       "filename": "melband_roformer_instvox_duality_v2.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_instvox_duality_v2.ckpt",
@@ -410,6 +475,9 @@
       "id": "MelBand Roformer | Vocals by becruily",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_becruily.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_becruily.ckpt",
@@ -425,6 +493,7 @@
       "id": "MelBand Roformer | Instrumental by becruily",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_becruily.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_becruily.ckpt",
@@ -440,6 +509,9 @@
       "id": "MelBand Roformer | Vocals Fullness by Aname",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocal_fullness_aname.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocal_fullness_aname.ckpt",
@@ -455,6 +527,9 @@
       "id": "BS Roformer | Vocals by Gabox",
       "arch": "roformer",
       "filename": "bs_roformer_vocals_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_vocals_gabox.ckpt",
@@ -470,6 +545,9 @@
       "id": "MelBand Roformer | Vocals by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_gabox.ckpt",
@@ -485,6 +563,9 @@
       "id": "MelBand Roformer | Vocals V2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_v2_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_v2_gabox.ckpt",
@@ -500,6 +581,9 @@
       "id": "MelBand Roformer | Vocals FV1 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv1_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv1_gabox.ckpt",
@@ -515,6 +599,9 @@
       "id": "MelBand Roformer | Vocals FV2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv2_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv2_gabox.ckpt",
@@ -530,6 +617,9 @@
       "id": "MelBand Roformer | Vocals FV3 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv3_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv3_gabox.ckpt",
@@ -545,6 +635,9 @@
       "id": "MelBand Roformer | Vocals FV4 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv4_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv4_gabox.ckpt",
@@ -560,6 +653,9 @@
       "id": "MelBand Roformer | Vocals FV5 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv5_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv5_gabox.ckpt",
@@ -575,6 +671,9 @@
       "id": "MelBand Roformer | Vocals FV6 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv6_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv6_gabox.ckpt",
@@ -590,6 +689,9 @@
       "id": "MelBand Roformer | Vocals FV7b by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_vocals_fv7b_gabox.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_vocals_fv7b_gabox.ckpt",
@@ -605,6 +707,7 @@
       "id": "MelBand Roformer | Instrumental by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_gabox.ckpt",
@@ -620,6 +723,7 @@
       "id": "MelBand Roformer | Instrumental 2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_2_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_2_gabox.ckpt",
@@ -635,6 +739,7 @@
       "id": "MelBand Roformer | Instrumental 3 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_3_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_3_gabox.ckpt",
@@ -650,6 +755,7 @@
       "id": "MelBand Roformer | Instrumental Bleedless V1 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_bleedless_v1_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_bleedless_v1_gabox.ckpt",
@@ -665,6 +771,7 @@
       "id": "MelBand Roformer | Instrumental Bleedless V2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_bleedless_v2_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_bleedless_v2_gabox.ckpt",
@@ -680,6 +787,7 @@
       "id": "MelBand Roformer | Instrumental Bleedless V3 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_bleedless_v3_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_bleedless_v3_gabox.ckpt",
@@ -695,6 +803,7 @@
       "id": "MelBand Roformer | Instrumental Fullness V1 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fullness_v1_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fullness_v1_gabox.ckpt",
@@ -710,6 +819,7 @@
       "id": "MelBand Roformer | Instrumental Fullness V2 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fullness_v2_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fullness_v2_gabox.ckpt",
@@ -725,6 +835,7 @@
       "id": "MelBand Roformer | Instrumental Fullness V3 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fullness_v3_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fullness_v3_gabox.ckpt",
@@ -740,6 +851,7 @@
       "id": "MelBand Roformer | Instrumental Fullness V4 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fullness_v4_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fullness_v4_gabox.ckpt",
@@ -755,6 +867,7 @@
       "id": "MelBand Roformer | Instrumental Fullness Noisy V4 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fullness_noise_v4_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fullness_noise_v4_gabox.ckpt",
@@ -770,6 +883,7 @@
       "id": "MelBand Roformer | INSTV5 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv5_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv5_gabox.ckpt",
@@ -785,6 +899,7 @@
       "id": "MelBand Roformer | INSTV5N by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv5n_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv5n_gabox.ckpt",
@@ -800,6 +915,7 @@
       "id": "MelBand Roformer | INSTV6 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv6_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv6_gabox.ckpt",
@@ -815,6 +931,7 @@
       "id": "MelBand Roformer | INSTV6N by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv6n_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv6n_gabox.ckpt",
@@ -830,6 +947,7 @@
       "id": "MelBand Roformer | INSTV7 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv7_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv7_gabox.ckpt",
@@ -845,6 +963,7 @@
       "id": "MelBand Roformer | INSTV7N by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv7n_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv7n_gabox.ckpt",
@@ -860,6 +979,7 @@
       "id": "MelBand Roformer | INSTV8 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv8_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv8_gabox.ckpt",
@@ -875,6 +995,7 @@
       "id": "MelBand Roformer | INSTV8N by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_instv8n_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_instv8n_gabox.ckpt",
@@ -890,6 +1011,7 @@
       "id": "MelBand Roformer | Instrumental FV7z by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fv7z_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fv7z_gabox.ckpt",
@@ -905,6 +1027,7 @@
       "id": "MelBand Roformer | Instrumental FV8 by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fv8_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fv8_gabox.ckpt",
@@ -920,6 +1043,7 @@
       "id": "MelBand Roformer | Instrumental FV8b by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fv8b_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fv8b_gabox.ckpt",
@@ -935,6 +1059,7 @@
       "id": "MelBand Roformer | Instrumental FVX by Gabox",
       "arch": "roformer",
       "filename": "mel_band_roformer_instrumental_fvx_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_instrumental_fvx_gabox.ckpt",
@@ -950,6 +1075,9 @@
       "id": "MelBand Roformer | De-Reverb by anvuew",
       "arch": "roformer",
       "filename": "dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_mel_band_roformer_anvuew_sdr_19.1729.ckpt",
@@ -965,6 +1093,9 @@
       "id": "MelBand Roformer | De-Reverb Less Aggressive by anvuew",
       "arch": "roformer",
       "filename": "dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_mel_band_roformer_less_aggressive_anvuew_sdr_18.8050.ckpt",
@@ -980,6 +1111,9 @@
       "id": "MelBand Roformer | De-Reverb Mono by anvuew",
       "arch": "roformer",
       "filename": "dereverb_mel_band_roformer_mono_anvuew.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_mel_band_roformer_mono_anvuew.ckpt",
@@ -995,6 +1129,9 @@
       "id": "MelBand Roformer | De-Reverb Big by Sucial",
       "arch": "roformer",
       "filename": "dereverb_big_mbr_ep_362.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_big_mbr_ep_362.ckpt",
@@ -1010,6 +1147,9 @@
       "id": "MelBand Roformer | De-Reverb Super Big by Sucial",
       "arch": "roformer",
       "filename": "dereverb_super_big_mbr_ep_346.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_super_big_mbr_ep_346.ckpt",
@@ -1025,6 +1165,10 @@
       "id": "MelBand Roformer | De-Reverb-Echo by Sucial",
       "arch": "roformer",
       "filename": "dereverb-echo_mel_band_roformer_sdr_10.0169.ckpt",
+      "stages": [
+        "dereverb",
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb-echo_mel_band_roformer_sdr_10.0169.ckpt",
@@ -1040,6 +1184,10 @@
       "id": "MelBand Roformer | De-Reverb-Echo V2 by Sucial",
       "arch": "roformer",
       "filename": "dereverb-echo_mel_band_roformer_sdr_13.4843_v2.ckpt",
+      "stages": [
+        "dereverb",
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb-echo_mel_band_roformer_sdr_13.4843_v2.ckpt",
@@ -1055,6 +1203,10 @@
       "id": "MelBand Roformer | De-Reverb-Echo Fused by Sucial",
       "arch": "roformer",
       "filename": "dereverb_echo_mbr_fused.ckpt",
+      "stages": [
+        "dereverb",
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/dereverb_echo_mbr_fused.ckpt",
@@ -1070,6 +1222,9 @@
       "id": "MelBand Roformer Kim | SYHFT by SYH99999",
       "arch": "roformer",
       "filename": "MelBandRoformerSYHFT.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MelBandRoformerSYHFT.ckpt",
@@ -1085,6 +1240,9 @@
       "id": "MelBand Roformer Kim | SYHFT V2 by SYH99999",
       "arch": "roformer",
       "filename": "MelBandRoformerSYHFTV2.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MelBandRoformerSYHFTV2.ckpt",
@@ -1100,6 +1258,9 @@
       "id": "MelBand Roformer Kim | SYHFT V2.5 by SYH99999",
       "arch": "roformer",
       "filename": "MelBandRoformerSYHFTV2.5.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MelBandRoformerSYHFTV2.5.ckpt",
@@ -1115,6 +1276,9 @@
       "id": "MelBand Roformer Kim | SYHFT V3 by SYH99999",
       "arch": "roformer",
       "filename": "MelBandRoformerSYHFTV3Epsilon.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MelBandRoformerSYHFTV3Epsilon.ckpt",
@@ -1130,6 +1294,9 @@
       "id": "MelBand Roformer Kim | Big SYHFT V1 by SYH99999",
       "arch": "roformer",
       "filename": "MelBandRoformerBigSYHFTV1.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MelBandRoformerBigSYHFTV1.ckpt",
@@ -1145,6 +1312,9 @@
       "id": "MelBand Roformer Kim | Big Beta 4 FT by unwa",
       "arch": "roformer",
       "filename": "melband_roformer_big_beta4.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_big_beta4.ckpt",
@@ -1160,6 +1330,9 @@
       "id": "MelBand Roformer Kim | Big Beta 5e FT by unwa",
       "arch": "roformer",
       "filename": "melband_roformer_big_beta5e.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_big_beta5e.ckpt",
@@ -1175,6 +1348,9 @@
       "id": "MelBand Roformer | Big Beta 6 by unwa",
       "arch": "roformer",
       "filename": "melband_roformer_big_beta6.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_big_beta6.ckpt",
@@ -1190,6 +1366,9 @@
       "id": "MelBand Roformer | Big Beta 6X by unwa",
       "arch": "roformer",
       "filename": "melband_roformer_big_beta6x.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/melband_roformer_big_beta6x.ckpt",
@@ -1205,6 +1384,9 @@
       "id": "BS Roformer | Vocals Revive by Unwa",
       "arch": "roformer",
       "filename": "bs_roformer_vocals_revive_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_vocals_revive_unwa.ckpt",
@@ -1220,6 +1402,9 @@
       "id": "BS Roformer | Vocals Revive V2 by Unwa",
       "arch": "roformer",
       "filename": "bs_roformer_vocals_revive_v2_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_vocals_revive_v2_unwa.ckpt",
@@ -1235,6 +1420,9 @@
       "id": "BS Roformer | Vocals Revive V3e by Unwa",
       "arch": "roformer",
       "filename": "bs_roformer_vocals_revive_v3e_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_vocals_revive_v3e_unwa.ckpt",
@@ -1250,6 +1438,7 @@
       "id": "BS Roformer | Chorus Male-Female by Sucial",
       "arch": "roformer",
       "filename": "model_chorus_bs_roformer_ep_267_sdr_24.1275.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/model_chorus_bs_roformer_ep_267_sdr_24.1275.ckpt",
@@ -1265,6 +1454,7 @@
       "id": "BS Roformer | Male-Female by aufr33",
       "arch": "roformer",
       "filename": "bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_male_female_by_aufr33_sdr_7.2889.ckpt",
@@ -1280,6 +1470,7 @@
       "id": "MelBand Roformer | Aspiration by Sucial",
       "arch": "roformer",
       "filename": "aspiration_mel_band_roformer_sdr_18.9845.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/aspiration_mel_band_roformer_sdr_18.9845.ckpt",
@@ -1295,6 +1486,7 @@
       "id": "MelBand Roformer | Aspiration Less Aggressive by Sucial",
       "arch": "roformer",
       "filename": "aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/aspiration_mel_band_roformer_less_aggr_sdr_18.1201.ckpt",
@@ -1310,6 +1502,7 @@
       "id": "MelBand Roformer | Bleed Suppressor V1 by unwa-97chris",
       "arch": "roformer",
       "filename": "mel_band_roformer_bleed_suppressor_v1.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/mel_band_roformer_bleed_suppressor_v1.ckpt",
@@ -1325,6 +1518,9 @@
       "id": "BS Roformer | Vocals Resurrection by unwa",
       "arch": "roformer",
       "filename": "bs_roformer_vocals_resurrection_unwa.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_vocals_resurrection_unwa.ckpt",
@@ -1340,6 +1536,7 @@
       "id": "BS Roformer | Instrumental Resurrection by unwa",
       "arch": "roformer",
       "filename": "bs_roformer_instrumental_resurrection_unwa.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_instrumental_resurrection_unwa.ckpt",
@@ -1355,6 +1552,7 @@
       "id": "BS Roformer | Instrumental ResurrectioN by Gabox",
       "arch": "roformer",
       "filename": "bs_roformer_instrumental_resurrection_gabox.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/bs_roformer_instrumental_resurrection_gabox.ckpt",
@@ -1370,6 +1568,9 @@
       "id": "BS Roformer SW by jarredou",
       "arch": "roformer",
       "filename": "BS-Roformer-SW.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/BS-Roformer-SW.ckpt",
@@ -1385,6 +1586,9 @@
       "id": "MDX23C_D1581.ckpt",
       "arch": "mdx23c",
       "filename": "MDX23C_D1581.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MDX23C_D1581.ckpt",
@@ -1400,6 +1604,9 @@
       "id": "MDX23C-8KFFT-InstVoc_HQ.ckpt",
       "arch": "mdx23c",
       "filename": "MDX23C-8KFFT-InstVoc_HQ.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MDX23C-8KFFT-InstVoc_HQ.ckpt",
@@ -1415,6 +1622,9 @@
       "id": "MDX23C-8KFFT-InstVoc_HQ_2.ckpt",
       "arch": "mdx23c",
       "filename": "MDX23C-8KFFT-InstVoc_HQ_2.ckpt",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MDX23C-8KFFT-InstVoc_HQ_2.ckpt",
@@ -1430,6 +1640,9 @@
       "id": "MDX23C-De-Reverb-aufr33-jarredou.ckpt",
       "arch": "mdx23c",
       "filename": "MDX23C-De-Reverb-aufr33-jarredou.ckpt",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MDX23C-De-Reverb-aufr33-jarredou.ckpt",
@@ -1445,6 +1658,7 @@
       "id": "MDX23C-DrumSep-aufr33-jarredou.ckpt",
       "arch": "mdx23c",
       "filename": "MDX23C-DrumSep-aufr33-jarredou.ckpt",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MDX23C-DrumSep-aufr33-jarredou.ckpt",
@@ -1460,6 +1674,7 @@
       "id": "UVR-MDX-NET-Inst_full_292.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_full_292.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_full_292.onnx"
@@ -1473,6 +1688,7 @@
       "id": "UVR-MDX-NET_Inst_187_beta.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Inst_187_beta.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Inst_187_beta.onnx"
@@ -1486,6 +1702,7 @@
       "id": "UVR-MDX-NET_Inst_82_beta.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Inst_82_beta.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Inst_82_beta.onnx"
@@ -1499,6 +1716,7 @@
       "id": "UVR-MDX-NET_Inst_90_beta.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Inst_90_beta.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Inst_90_beta.onnx"
@@ -1512,6 +1730,9 @@
       "id": "UVR-MDX-NET_Main_340.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Main_340.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Main_340.onnx"
@@ -1525,6 +1746,9 @@
       "id": "UVR-MDX-NET_Main_390.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Main_390.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Main_390.onnx"
@@ -1538,6 +1762,9 @@
       "id": "UVR-MDX-NET_Main_406.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Main_406.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Main_406.onnx"
@@ -1551,6 +1778,9 @@
       "id": "UVR-MDX-NET_Main_427.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Main_427.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Main_427.onnx"
@@ -1564,6 +1794,9 @@
       "id": "UVR-MDX-NET_Main_438.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Main_438.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Main_438.onnx"
@@ -1577,6 +1810,7 @@
       "id": "UVR-MDX-NET-Inst_HQ_1.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_HQ_1.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_HQ_1.onnx"
@@ -1590,6 +1824,7 @@
       "id": "UVR-MDX-NET-Inst_HQ_2.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_HQ_2.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_HQ_2.onnx"
@@ -1603,6 +1838,7 @@
       "id": "UVR-MDX-NET-Inst_HQ_3.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_HQ_3.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_HQ_3.onnx"
@@ -1616,6 +1852,7 @@
       "id": "UVR-MDX-NET-Inst_HQ_4.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_HQ_4.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_HQ_4.onnx"
@@ -1629,6 +1866,7 @@
       "id": "UVR-MDX-NET-Inst_HQ_5.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_HQ_5.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_HQ_5.onnx"
@@ -1642,6 +1880,9 @@
       "id": "UVR_MDXNET_Main.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_Main.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_Main.onnx"
@@ -1655,6 +1896,7 @@
       "id": "UVR-MDX-NET-Inst_Main.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_Main.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_Main.onnx"
@@ -1668,6 +1910,9 @@
       "id": "UVR_MDXNET_1_9703.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_1_9703.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_1_9703.onnx"
@@ -1681,6 +1926,9 @@
       "id": "UVR_MDXNET_2_9682.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_2_9682.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_2_9682.onnx"
@@ -1694,6 +1942,9 @@
       "id": "UVR_MDXNET_3_9662.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_3_9662.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_3_9662.onnx"
@@ -1707,6 +1958,7 @@
       "id": "UVR-MDX-NET-Inst_1.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_1.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_1.onnx"
@@ -1720,6 +1972,7 @@
       "id": "UVR-MDX-NET-Inst_2.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_2.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_2.onnx"
@@ -1733,6 +1986,7 @@
       "id": "UVR-MDX-NET-Inst_3.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Inst_3.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Inst_3.onnx"
@@ -1746,6 +2000,9 @@
       "id": "UVR_MDXNET_KARA.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_KARA.onnx",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_KARA.onnx"
@@ -1759,6 +2016,9 @@
       "id": "UVR_MDXNET_KARA_2.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_KARA_2.onnx",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_KARA_2.onnx"
@@ -1772,6 +2032,9 @@
       "id": "UVR_MDXNET_9482.onnx",
       "arch": "mdxnet",
       "filename": "UVR_MDXNET_9482.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR_MDXNET_9482.onnx"
@@ -1785,6 +2048,9 @@
       "id": "UVR-MDX-NET-Voc_FT.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET-Voc_FT.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET-Voc_FT.onnx"
@@ -1798,6 +2064,9 @@
       "id": "Kim_Vocal_1.onnx",
       "arch": "mdxnet",
       "filename": "Kim_Vocal_1.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/Kim_Vocal_1.onnx"
@@ -1811,6 +2080,9 @@
       "id": "Kim_Vocal_2.onnx",
       "arch": "mdxnet",
       "filename": "Kim_Vocal_2.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/Kim_Vocal_2.onnx"
@@ -1824,6 +2096,7 @@
       "id": "Kim_Inst.onnx",
       "arch": "mdxnet",
       "filename": "Kim_Inst.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/Kim_Inst.onnx"
@@ -1837,6 +2110,9 @@
       "id": "Reverb_HQ_By_FoxJoy.onnx",
       "arch": "mdxnet",
       "filename": "Reverb_HQ_By_FoxJoy.onnx",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/Reverb_HQ_By_FoxJoy.onnx"
@@ -1850,6 +2126,7 @@
       "id": "UVR-MDX-NET_Crowd_HQ_1.onnx",
       "arch": "mdxnet",
       "filename": "UVR-MDX-NET_Crowd_HQ_1.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-MDX-NET_Crowd_HQ_1.onnx"
@@ -1863,6 +2140,9 @@
       "id": "kuielab_a_vocals.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_a_vocals.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_a_vocals.onnx"
@@ -1876,6 +2156,7 @@
       "id": "kuielab_a_other.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_a_other.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_a_other.onnx"
@@ -1889,6 +2170,7 @@
       "id": "kuielab_a_bass.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_a_bass.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_a_bass.onnx"
@@ -1902,6 +2184,7 @@
       "id": "kuielab_a_drums.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_a_drums.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_a_drums.onnx"
@@ -1915,6 +2198,9 @@
       "id": "kuielab_b_vocals.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_b_vocals.onnx",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_b_vocals.onnx"
@@ -1928,6 +2214,7 @@
       "id": "kuielab_b_other.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_b_other.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_b_other.onnx"
@@ -1941,6 +2228,7 @@
       "id": "kuielab_b_bass.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_b_bass.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_b_bass.onnx"
@@ -1954,6 +2242,7 @@
       "id": "kuielab_b_drums.onnx",
       "arch": "mdxnet",
       "filename": "kuielab_b_drums.onnx",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/kuielab_b_drums.onnx"
@@ -1967,6 +2256,7 @@
       "id": "1_HP-UVR.pth",
       "arch": "vrarch",
       "filename": "1_HP-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/1_HP-UVR.pth"
@@ -1980,6 +2270,7 @@
       "id": "2_HP-UVR.pth",
       "arch": "vrarch",
       "filename": "2_HP-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/2_HP-UVR.pth"
@@ -1993,6 +2284,9 @@
       "id": "3_HP-Vocal-UVR.pth",
       "arch": "vrarch",
       "filename": "3_HP-Vocal-UVR.pth",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/3_HP-Vocal-UVR.pth"
@@ -2006,6 +2300,9 @@
       "id": "4_HP-Vocal-UVR.pth",
       "arch": "vrarch",
       "filename": "4_HP-Vocal-UVR.pth",
+      "stages": [
+        "vocals"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/4_HP-Vocal-UVR.pth"
@@ -2019,6 +2316,9 @@
       "id": "5_HP-Karaoke-UVR.pth",
       "arch": "vrarch",
       "filename": "5_HP-Karaoke-UVR.pth",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/5_HP-Karaoke-UVR.pth"
@@ -2032,6 +2332,9 @@
       "id": "6_HP-Karaoke-UVR.pth",
       "arch": "vrarch",
       "filename": "6_HP-Karaoke-UVR.pth",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/6_HP-Karaoke-UVR.pth"
@@ -2045,6 +2348,7 @@
       "id": "7_HP2-UVR.pth",
       "arch": "vrarch",
       "filename": "7_HP2-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/7_HP2-UVR.pth"
@@ -2058,6 +2362,7 @@
       "id": "8_HP2-UVR.pth",
       "arch": "vrarch",
       "filename": "8_HP2-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/8_HP2-UVR.pth"
@@ -2071,6 +2376,7 @@
       "id": "9_HP2-UVR.pth",
       "arch": "vrarch",
       "filename": "9_HP2-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/9_HP2-UVR.pth"
@@ -2084,6 +2390,7 @@
       "id": "10_SP-UVR-2B-32000-1.pth",
       "arch": "vrarch",
       "filename": "10_SP-UVR-2B-32000-1.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/10_SP-UVR-2B-32000-1.pth"
@@ -2097,6 +2404,7 @@
       "id": "11_SP-UVR-2B-32000-2.pth",
       "arch": "vrarch",
       "filename": "11_SP-UVR-2B-32000-2.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/11_SP-UVR-2B-32000-2.pth"
@@ -2110,6 +2418,7 @@
       "id": "12_SP-UVR-3B-44100.pth",
       "arch": "vrarch",
       "filename": "12_SP-UVR-3B-44100.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/12_SP-UVR-3B-44100.pth"
@@ -2123,6 +2432,7 @@
       "id": "13_SP-UVR-4B-44100-1.pth",
       "arch": "vrarch",
       "filename": "13_SP-UVR-4B-44100-1.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/13_SP-UVR-4B-44100-1.pth"
@@ -2136,6 +2446,7 @@
       "id": "14_SP-UVR-4B-44100-2.pth",
       "arch": "vrarch",
       "filename": "14_SP-UVR-4B-44100-2.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/14_SP-UVR-4B-44100-2.pth"
@@ -2149,6 +2460,7 @@
       "id": "15_SP-UVR-MID-44100-1.pth",
       "arch": "vrarch",
       "filename": "15_SP-UVR-MID-44100-1.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/15_SP-UVR-MID-44100-1.pth"
@@ -2162,6 +2474,7 @@
       "id": "16_SP-UVR-MID-44100-2.pth",
       "arch": "vrarch",
       "filename": "16_SP-UVR-MID-44100-2.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/16_SP-UVR-MID-44100-2.pth"
@@ -2175,6 +2488,7 @@
       "id": "17_HP-Wind_Inst-UVR.pth",
       "arch": "vrarch",
       "filename": "17_HP-Wind_Inst-UVR.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/17_HP-Wind_Inst-UVR.pth"
@@ -2188,6 +2502,9 @@
       "id": "UVR-De-Echo-Aggressive.pth",
       "arch": "vrarch",
       "filename": "UVR-De-Echo-Aggressive.pth",
+      "stages": [
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-De-Echo-Aggressive.pth"
@@ -2201,6 +2518,9 @@
       "id": "UVR-De-Echo-Normal.pth",
       "arch": "vrarch",
       "filename": "UVR-De-Echo-Normal.pth",
+      "stages": [
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-De-Echo-Normal.pth"
@@ -2214,6 +2534,10 @@
       "id": "UVR-DeEcho-DeReverb.pth",
       "arch": "vrarch",
       "filename": "UVR-DeEcho-DeReverb.pth",
+      "stages": [
+        "dereverb",
+        "deecho"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-DeEcho-DeReverb.pth"
@@ -2227,6 +2551,9 @@
       "id": "UVR-De-Reverb-aufr33-jarredou.pth",
       "arch": "vrarch",
       "filename": "UVR-De-Reverb-aufr33-jarredou.pth",
+      "stages": [
+        "dereverb"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-De-Reverb-aufr33-jarredou.pth"
@@ -2240,6 +2567,9 @@
       "id": "UVR-DeNoise-Lite.pth",
       "arch": "vrarch",
       "filename": "UVR-DeNoise-Lite.pth",
+      "stages": [
+        "denoise"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-DeNoise-Lite.pth"
@@ -2253,6 +2583,9 @@
       "id": "UVR-DeNoise.pth",
       "arch": "vrarch",
       "filename": "UVR-DeNoise.pth",
+      "stages": [
+        "denoise"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-DeNoise.pth"
@@ -2266,6 +2599,9 @@
       "id": "UVR-BVE-4B_SN-44100-1.pth",
       "arch": "vrarch",
       "filename": "UVR-BVE-4B_SN-44100-1.pth",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-BVE-4B_SN-44100-1.pth"
@@ -2279,6 +2615,9 @@
       "id": "UVR-BVE-4B_SN-44100-2.pth",
       "arch": "vrarch",
       "filename": "UVR-BVE-4B_SN-44100-2.pth",
+      "stages": [
+        "karaoke"
+      ],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/UVR-BVE-4B_SN-44100-2.pth"
@@ -2292,6 +2631,7 @@
       "id": "MGM_HIGHEND_v4.pth",
       "arch": "vrarch",
       "filename": "MGM_HIGHEND_v4.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MGM_HIGHEND_v4.pth"
@@ -2305,6 +2645,7 @@
       "id": "MGM_LOWEND_A_v4.pth",
       "arch": "vrarch",
       "filename": "MGM_LOWEND_A_v4.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MGM_LOWEND_A_v4.pth"
@@ -2318,6 +2659,7 @@
       "id": "MGM_LOWEND_B_v4.pth",
       "arch": "vrarch",
       "filename": "MGM_LOWEND_B_v4.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MGM_LOWEND_B_v4.pth"
@@ -2331,6 +2673,7 @@
       "id": "MGM_MAIN_v4.pth",
       "arch": "vrarch",
       "filename": "MGM_MAIN_v4.pth",
+      "stages": [],
       "sources": {
         "github": [
           "https://github.com/nomadkaraoke/python-audio-separator/releases/download/model-configs/MGM_MAIN_v4.pth"
@@ -2344,24 +2687,28 @@
       "id": "htdemucs_ft.yaml",
       "arch": "demucs",
       "filename": "htdemucs_ft.yaml",
+      "stages": [],
       "sources": {}
     },
     {
       "id": "htdemucs_6s.yaml",
       "arch": "demucs",
       "filename": "htdemucs_6s.yaml",
+      "stages": [],
       "sources": {}
     },
     {
       "id": "htdemucs.yaml",
       "arch": "demucs",
       "filename": "htdemucs.yaml",
+      "stages": [],
       "sources": {}
     },
     {
       "id": "hdemucs_mmi.yaml",
       "arch": "demucs",
       "filename": "hdemucs_mmi.yaml",
+      "stages": [],
       "sources": {}
     }
   ]

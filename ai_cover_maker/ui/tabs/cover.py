@@ -53,7 +53,7 @@ def default_settings(presets: dict) -> dict:
     rvc["embedder_model_custom"] = rvc["embedder_model_custom"] or ""
     names = voice_names()
     return {
-        "voice": names[0] if names else None, "output_format": "wav", "preset": DEFAULT_PRESET,
+        "voice": names[0] if names else None, "output_format": "wav", "preset": DEFAULT_PRESET, "all_models": False,
         **{f"{stage}_model": stages[f"{stage}_model"] or "" for stage in SEPARATION_STAGES},
         **rvc, "backing_voice": "", "backing_pitch": 0, **asdict(VocalEffects()),
         "key_shift": 0, "lead_gain_db": 0.0, "backing_gain_db": 0.0, "instrumental_gain_db": 0.0,
@@ -84,13 +84,15 @@ def _same_kind(value, default) -> bool:
 
 def render_cover_tab(ctx: AppContext) -> CoverTab:
     presets = load_presets()
-    model_choices = components.model_choices(ctx.catalog, list(ctx.catalog))
-    model_ids = [""] + [m.id for m in ctx.catalog]
+    saved = ctx.cover_settings.load()
+    # A saved model outside its step is only valid while "Show all models" is on
+    saved_all = saved.get("all_models") is True
     voices = voice_names()
     choices = {"voice": voices, "backing_voice": ["", *voices], "preset": list(presets),
                "output_format": OUTPUT_FORMATS, "f0_method": F0_METHODS, "embedder_model": EMBEDDERS,
-               "cleanup_mode": CLEANUP_MODES, **{f"{stage}_model": model_ids for stage in SEPARATION_STAGES}}
-    initial = initial_settings(ctx.cover_settings.load(), default_settings(presets), choices)
+               "cleanup_mode": CLEANUP_MODES,
+               **{f"{stage}_model": ["", *stage_model_ids(ctx.catalog, stage, saved_all)] for stage in SEPARATION_STAGES}}
+    initial = initial_settings(saved, default_settings(presets), choices)
 
     with gr.TabItem(i18n("Cover")):
         a11y.tab_heading(i18n("Cover"))
@@ -109,14 +111,17 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
             gr.Markdown(i18n("You can paste the link to the video/audio from many sites, check the complete list [here](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md)"))
 
         with gr.Accordion(i18n("Separation steps"), open=False):
-            with gr.Row():
+            with gr.Row(equal_height=True):
                 preset = gr.Dropdown(list(presets), value=initial["preset"], label=i18n("Preset"),
-                                     info=i18n(presets[initial["preset"]].get("description", "")), interactive=True)
+                                     info=i18n(presets[initial["preset"]].get("description", "")), interactive=True,
+                                     scale=3)
+                all_models = gr.Checkbox(value=initial["all_models"], label=i18n("Show all models"),
+                                         info=i18n("Lists every model in each step, not only the ones made for it"),
+                                         scale=1)
             stages = {}
             for stage in SEPARATION_STAGES:
-                optional = stage != "vocals"
-                choices = ([(i18n("Skip this step"), "")] if optional else []) + model_choices
-                stages[stage] = gr.Dropdown(choices, value=initial[f"{stage}_model"], label=i18n(STAGE_LABELS[stage]),
+                stages[stage] = gr.Dropdown(stage_choices(ctx.catalog, stage, initial["all_models"]),
+                                            value=initial[f"{stage}_model"], label=i18n(STAGE_LABELS[stage]),
                                             info=i18n(STAGE_INFO[stage]), interactive=True)
 
         with gr.Accordion(i18n("Voice conversion settings"), open=False):
@@ -236,7 +241,20 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
         return [gr.update(info=i18n(chosen.get("description", "")))] + [
             kwargs[f"{stage}_model"] or "" for stage in SEPARATION_STAGES]
 
+    def show_all_models(show_all, preset_name, *selected):
+        """Each step's dropdown with its own models or the whole catalog, keeping the selections that still fit."""
+        chosen = preset_options(presets.get(preset_name) or {})
+        updates = []
+        for stage, value in zip(SEPARATION_STAGES, selected):
+            ids = stage_model_ids(ctx.catalog, stage, show_all)
+            fallback = chosen[f"{stage}_model"] or ""
+            updates.append(gr.update(choices=stage_choices(ctx.catalog, stage, show_all),
+                                     value=value if value in ids or value == "" else fallback))
+        return updates
+
     preset.change(apply_preset, inputs=[preset], outputs=[preset, *stages.values()], api_visibility="undocumented")
+    all_models.change(show_all_models, inputs=[all_models, preset, *stages.values()], outputs=list(stages.values()),
+                      show_progress="hidden", api_visibility="undocumented")
     refresh.click(refresh_cover_voices, inputs=[voice, backing_voice], outputs=[voice, backing_voice],
                   api_visibility="undocumented")
     download.click(user_errors(lambda url: str(download_audio(url))), inputs=[link], outputs=[audio],
@@ -257,8 +275,21 @@ def render_cover_tab(ctx: AppContext) -> CoverTab:
                                      outputs=[batch_info], validator=validate_batch, api_name="make_covers_batch",
                                      concurrency_limit=1, concurrency_id=GPU_CONCURRENCY_ID)
     stop_button.click(None, cancels=[batch_event], api_visibility="undocumented")
-    # Saved from the Settings tab: every option of the cover plus the preset
-    return CoverTab(voice=voice, backing_voice=backing_voice, settings={"preset": preset, **option_inputs})
+    # Saved from the Settings tab: every option of the cover plus the preset and "Show all models"
+    return CoverTab(voice=voice, backing_voice=backing_voice,
+                    settings={"preset": preset, "all_models": all_models, **option_inputs})
+
+
+def stage_model_ids(catalog, stage: str, show_all: bool) -> list[str]:
+    """The ids of the models a step lists: the ones tagged for it, or every model."""
+    return [m.id for m in (catalog if show_all else catalog.for_stage(stage))]
+
+
+def stage_choices(catalog, stage: str, show_all: bool) -> list[tuple[str, str]]:
+    """A step's dropdown choices: "Skip this step" for the optional steps, then its models, recommended first."""
+    models = list(catalog) if show_all else catalog.for_stage(stage)
+    skip = [(i18n("Skip this step"), "")] if stage != "vocals" else []
+    return skip + components.model_choices(catalog, models)
 
 
 def backing_choices() -> list[tuple[str, str]]:

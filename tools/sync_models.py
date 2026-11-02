@@ -2,6 +2,8 @@
 
 - Adds the models audio-separator supports that the catalog lacks, right after the
   model that precedes them in audio-separator's list (so families stay together).
+- Tags the models it adds with their cover steps (tools/tag_model_stages.py), and lists the ones
+  whose tags need a look.
 - Fills the empty GitHub / Hugging Face sources of existing models once their files
   can be downloaded (e.g. after uploading them to the Hugging Face mirror).
 
@@ -20,6 +22,7 @@ import json
 import logging
 import sys
 import tempfile
+from typing import Callable
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -27,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tools.check_model_links import (  # noqa: E402
     CATALOG, GITHUB_MODEL_CONFIGS, UVR_MODEL_REPO, Checker, check_url, check_urls, huggingface_urls,
 )
+from tools.tag_model_stages import Verdict, tag_all, with_stages  # noqa: E402
 
 ROFORMER_PREFIX = "Roformer Model: "
 # audio-separator model type -> catalog arch (MDXC holds both MDX23C and Roformer models)
@@ -85,8 +89,10 @@ def working_sources(arch: str, files: list[str], checker: Checker) -> dict:
     return sources
 
 
-def plan(catalog: list[dict], upstream: list[dict], checker: Checker) -> tuple[list[dict], list[str]]:
-    """The new catalog and a description of each change."""
+def plan(catalog: list[dict], upstream: list[dict], checker: Checker,
+         tag: Callable[[dict], Verdict] = None) -> tuple[list[dict], list[str]]:
+    """The new catalog and a description of each change. ``tag`` gives the stages of a new model."""
+    tag = tag or (lambda entry: tag_all([entry])[entry["id"]])
     by_file = {m["filename"]: m for m in catalog}
     models = [dict(m) for m in catalog]
     changes = []
@@ -110,13 +116,18 @@ def plan(catalog: list[dict], upstream: list[dict], checker: Checker) -> tuple[l
         arch = arch_for(item["type"], item["name"])
         entry = {"id": id_for(arch, item["name"], item["filename"]), "arch": arch, "filename": item["filename"],
                  "sources": working_sources(arch, item["files"], checker)}
+        verdict = tag(entry)
+        entry = with_stages(entry, verdict.stages)
         index = _insert_index(models, arch, previous)
         models.insert(index, entry)
         by_file[entry["filename"]] = entry
         previous = entry["filename"]
         missing = [s for s in ("github", "huggingface") if s not in entry["sources"]]
-        note = f" (no {' / '.join(missing)} source yet)" if missing else ""
-        changes.append(f"add [{arch}] {entry['id']}{note}")
+        notes = [f"no {' / '.join(missing)} source yet"] if missing else []
+        notes.append(f"steps: {', '.join(entry['stages']) or 'none'}")
+        if verdict.review:
+            notes.append(f"review the steps in tools/tag_model_stages.py: {'; '.join(verdict.review)}")
+        changes.append(f"add [{arch}] {entry['id']} ({'; '.join(notes)})")
     return models, changes
 
 
