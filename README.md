@@ -20,7 +20,7 @@ The rewrite of [RVC AI Cover Maker UI](https://github.com/Eddycrack864/RVC-AI-Co
 * Each cover is saved in its own folder with every stem made along the way (vocals, instrumental, lead/backing vocals, reverb, converted vocals...), named after the song, for your own remixes.
 * **Voices**: add voice models by link (Hugging Face, Google Drive, direct `.zip`/`.pth`/`.index`) or upload, and delete them.
 * The full UVR5 UI model catalog (Roformer, MDX23C, MDX-NET, VR Arch, Demucs) for every separation step, with UVR5 UI's default parameters.
-* Batch covers, downloads from [every site yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), themes, English/Spanish/Portuguese.
+* Batch covers, downloads from [every site yt-dlp supports](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md), themes and 19 languages.
 * Windows/Linux and Google Colab.
 
 ## Requirements
