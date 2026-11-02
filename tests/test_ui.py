@@ -302,6 +302,11 @@ def test_effect_settings_are_editable_only_while_the_effect_is_checked(app):
     blocks = {getattr(b, "label", None): b for b in app.blocks.values()}
     room = blocks["Room size"]
     assert blocks["Reverb"].value is True and room.interactive is True
-    toggle = next(f for f in app.fns.values() if f.inputs == [blocks["Reverb"]])
-    assert room in toggle.outputs
-    assert all(update["interactive"] is False for update in toggle.fn(False))
+    # High-pass has a single setting: Gradio would take a returned list as that slider's value
+    for effect, setting in (("Reverb", room), ("High-pass filter", blocks["Cutoff frequency (Hz)"])):
+        toggle = next(f for f in app.fns.values() if f.inputs == [blocks[effect]])
+        assert setting in toggle.outputs
+        for on in (False, True):
+            updates = toggle.fn(on)
+            assert set(updates) == set(toggle.outputs)
+            assert all(update == {"__type__": "update", "interactive": on} for update in updates.values())

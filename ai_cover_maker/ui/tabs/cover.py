@@ -297,6 +297,7 @@ def _effects_controls(d: VocalEffects) -> dict:
         outputs = [c[name] for name in settings]
         for component in outputs:
             component.interactive = getattr(d, effect)
-        c[effect].change(lambda on, n=len(outputs): [gr.update(interactive=on)] * n, inputs=[c[effect]],
+        # A dict, not a list: with a single output Gradio would take the list as the slider's value
+        c[effect].change(lambda on, outs=outputs: {o: gr.update(interactive=on) for o in outs}, inputs=[c[effect]],
                          outputs=outputs, show_progress="hidden", api_visibility="undocumented")
     return c
