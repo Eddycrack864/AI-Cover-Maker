@@ -105,6 +105,29 @@ def test_launch_adds_the_accessibility_fixes(ctx):
     assert a11y.gradio_i18n("pt_BR").translations_dict.keys() == {"pt-BR"}
 
 
+def test_launch_allows_only_the_outputs_folder(ctx):
+    assert launch_kwargs(ctx)["allowed_paths"] == [str(paths.OUTPUTS_DIR)]
+
+
+def test_launch_allows_an_outputs_folder_symlinked_outside_the_cwd(ctx, tmp_path, monkeypatch):
+    # Colab with Google Drive: Gradio resolves the symlink and the file is no longer in the cwd
+    drive_outputs = tmp_path / "drive" / "outputs"
+    drive_outputs.mkdir(parents=True)
+    app_dir = tmp_path / "app"
+    app_dir.mkdir()
+    link = app_dir / "outputs"
+    try:
+        link.symlink_to(drive_outputs, target_is_directory=True)
+    except OSError:
+        pytest.skip("creating symlinks needs developer mode on Windows")
+    monkeypatch.setattr(paths, "OUTPUTS_DIR", link)
+    monkeypatch.chdir(app_dir)
+
+    cover = link / "Song (Voice Cover)" / "Song (Voice Cover).mp3"
+    assert not gr.utils.is_allowed_file(cover, [], [app_dir], [])[0]
+    assert gr.utils.is_allowed_file(cover, [], [app_dir, *launch_kwargs(ctx)["allowed_paths"]], [])[0]
+
+
 def test_announcements():
     assert a11y.announce("Hi")["id"] != a11y.announce("Hi")["id"]  # repeated messages are read again
 

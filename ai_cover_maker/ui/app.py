@@ -2,6 +2,7 @@
 
 import gradio as gr
 
+from ai_cover_maker import paths
 from ai_cover_maker.i18n import i18n
 from ai_cover_maker.ui import a11y, theme
 from ai_cover_maker.ui.context import AppContext
@@ -25,6 +26,9 @@ def launch_kwargs(ctx: AppContext) -> dict:
         "head": a11y.head_html(i18n.language),
         "css": a11y.CSS,
         "i18n": a11y.gradio_i18n(i18n.language),
+        # On Colab outputs/ can be a symlink to Google Drive. Gradio resolves symlinks before
+        # checking a returned file, so the cwd alone doesn't cover it.
+        "allowed_paths": [str(paths.OUTPUTS_DIR)],
     }
 
 
